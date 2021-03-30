@@ -6,5 +6,6 @@ enum token_type{
     WORD,
     FLAG,
     WHITESPACE,
-    UNDEFINED
+    UNDEFINED,
+    QUOTE
 };

@@ -23,5 +23,5 @@ void yyerror(char* e) {
 }
 %}
 
-%token BUILTIN, META, WORD, FLAG, WHITESPACE, UNDEFINED
+%token BUILTIN, META, WORD, FLAG, WHITESPACE, UNDEFINED, QUOTE
 
