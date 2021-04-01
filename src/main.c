@@ -1,0 +1,137 @@
+#include "init.h"
+#include "nutshell.tab.h"
+#include <stdio.h>
+#include <string.h>
+
+int yylex();
+extern char* yytext;
+extern int yyparse();
+
+void setenv(char** args, int n_args);
+void unsetenv(char** args, int n_args);
+void printenv(char** args, int n_args);
+void cd(char** args, int n_args);
+void alias(char** args, int n_args);
+void unalias(char** args, int n_args); 
+void bye();
+
+int main() {
+    cur_envvar = 0;
+    cur_alias = 0;
+    printf("Nutshell\n");
+
+    while(1) {
+        printf(">");
+        if (yyparse() == 1)
+            break;
+    }
+    printf("...done\n");
+
+    // while(1) {
+    //     int token = yylex();
+    //     if (token == 0) break;
+
+    //     if (token == BUILT_IN) {
+    //         printf("BUILT_IN\n");
+    //         printf("%s\n", yytext);
+    //     } else if (token == DOT) {
+    //         printf("DOT\n");
+    //         printf("%s\n", yytext);
+    //     } else if (token == DOT2) {
+    //         printf("DOT2\n");
+    //         printf("%s\n", yytext);
+    //     } else if (token == TILDE) {
+    //         printf("TILDE\n");
+    //         printf("%s\n", yytext);
+    //     } else if (token == META) {
+    //         printf("META\n");
+    //         printf("%s\n", yytext);
+    //     } else if (token == WORD) {
+    //         printf("WORD\n");
+    //         printf("%s\n", yytext);
+    //     } else if (token == QUOTE) {
+    //         printf("QUOTE\n");
+    //         printf("%s\n", yytext);
+    //     } else if (token == WS) {
+    //         printf("WS\n");
+    //         printf("%s\n", yytext);
+    //     }
+    // }
+
+}
+
+// main entry point for a command 
+int call(char** args, int n_args) {
+    printf("Printing Args in Main.C\n");
+    for (int i = 0; i < n_args; i++) {
+        printf("%s\n", args[i]);
+    }
+
+    // TODO: check for aliases first 
+    // check for built in command 
+    char* cmd = args[0];
+
+    if (strcmp(cmd, "setenv") == 0) {
+        setenv(args, n_args);
+    } else if (strcmp(cmd, "printenv") == 0) {
+        printenv(args, n_args);
+    } else if (strcmp(cmd, "unsetenv") == 0) {
+        unsetenv(args, n_args);
+    } else if (strcmp(cmd, "cd") == 0) {
+        cd(args, n_args);
+    } else if (strcmp(cmd, "alias") == 0) {
+        alias(args, n_args);
+    } else if (strcmp(cmd, "unalias") == 0) {
+        unalias(args, n_args);
+    } else if (strcmp(cmd, "bye") == 0) {
+        return 1;
+    } else {
+        // extern 
+    }
+
+    return 0;
+
+}
+
+void setenv(char** args, int n_args) {
+    //
+    printf("SET ENV %s = %s\n", args[1], args[2]);
+
+    if (n_args != 3) {
+        printf("ERROR: EXPECTED 2 ARGUMENTS, GOT %d\n", n_args-1);
+    }
+
+    // check if currently in the table 
+    for (int i = 0; i < cur_envvar; i++) {
+        if(strcmp(args[1], var_table.keys[i]) == 0) {
+            return;
+        }
+    }
+
+    // else, add to the table 
+    var_table.keys[cur_envvar] = args[1];
+    var_table.vals[cur_envvar] = args[2];
+    cur_envvar++;
+
+
+}
+
+void printenv(char** args, int n_args) {
+    //
+}
+
+void cd(char** args, int n_args) {
+    //
+}
+
+void alias(char** args, int n_args) { 
+    //
+}
+
+void unalias(char** args, int n_args) {
+    //
+}
+
+void bye() {
+    //
+}
