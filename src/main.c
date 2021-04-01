@@ -7,6 +7,7 @@ int yylex();
 extern char* yytext;
 extern int yyparse();
 
+void init();
 void setenv(char** args, int n_args);
 void unsetenv(char** args, int n_args);
 void printenv(char** args, int n_args);
@@ -16,8 +17,7 @@ void unalias(char** args, int n_args);
 void bye();
 
 int main() {
-    cur_envvar = 0;
-    cur_alias = 0;
+    init();
     printf("Nutshell\n");
 
     while(1) {
@@ -58,6 +58,16 @@ int main() {
     //     }
     // }
 
+}
+
+void init() {
+    for (int i = 0; i < MAX_ENV; i++) {
+        var_table.occupied[i] = 0;
+    }
+
+    for (int i = 0; i < MAX_ALIAS; i++) {
+        alias_table.occupied[i] = 0;
+    }
 }
 
 // main entry point for a command 
@@ -102,18 +112,24 @@ void setenv(char** args, int n_args) {
     }
 
     // check if currently in the table 
-    for (int i = 0; i < cur_envvar; i++) {
-        if(strcmp(args[1], var_table.keys[i]) == 0) {
+    for (int i = 0; i < MAX_ENV; i++) {
+        if(var_table.occupied[i] == 1 
+            && strcmp(args[1], var_table.keys[i]) == 0) {
+            var_table.vals[i] = args[2];
             return;
         }
     }
 
-    // else, add to the table 
-    var_table.keys[cur_envvar] = args[1];
-    var_table.vals[cur_envvar] = args[2];
-    cur_envvar++;
-
-
+    // if not in table, put into the first unoccupied space 
+    for (int i = 0; i < MAX_ENV; i++) {
+        if (var_table.occupied[i] == 0) {
+            var_table.keys[i] = args[1];
+            var_table.vals[i] = args[2];
+            var_table.occupied[i] = 1;
+            printf("entered at index %d\n", i);
+            break;
+        }
+    }
 }
 
 void printenv(char** args, int n_args) {

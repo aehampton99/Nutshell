@@ -4,11 +4,13 @@
 #define MAX_ALIAS 100
 
 struct env_vars {
+    int occupied[MAX_ENV];
     char *keys[MAX_ENV];
     char *vals[MAX_ENV];
 };
 
 struct aliases {
+    int occupied[MAX_ALIAS];
     char *keys[MAX_ALIAS];
     char *vals[MAX_ALIAS];
 };
