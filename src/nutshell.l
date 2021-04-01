@@ -7,10 +7,7 @@
 %%
 "\n"                            {return RET;}
 \"(.*?)\"                       {return QUOTE;}
-"."                             {return DOT;}
-".."                            {return DOT2;}
-"~"                             {return TILDE;}
 "<"|">"|"\|"|"\\"|"&"|"\""      {return META;}
-[^ "\t<>\|\\&\n.~]+             {yylval.val = strdup(yytext); return WORD;}
+[^ "\t<>\|\\&\n]+             {yylval.val = strdup(yytext); return WORD;}
 %%
 

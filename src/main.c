@@ -14,7 +14,6 @@ void printenv(char** args, int n_args);
 void cd(char** args, int n_args);
 void alias(char** args, int n_args);
 void unalias(char** args, int n_args); 
-void bye();
 
 int main() {
     init();
@@ -109,6 +108,7 @@ void setenv(char** args, int n_args) {
 
     if (n_args != 3) {
         printf("ERROR: EXPECTED 2 ARGUMENTS, GOT %d\n", n_args-1);
+        return;
     }
 
     // check if currently in the table 
@@ -148,7 +148,28 @@ void printenv(char** args, int n_args) {
 }
 
 void cd(char** args, int n_args) {
-    //
+
+    // verify args
+    if (n_args == 1) {
+        printf("ERROR: EXPECTED 1 ARGUMENT, GOT 0\n");
+        return;
+    } else if (n_args > 2) {
+        printf("WARNING: EXPECTED 1 ARGUMENT, GOT %d\n", n_args-1);
+    }
+
+    // tilde expansion
+    if (args[1][0] == '~') {
+        // expand tilde to home
+    } else if (args[1][0] == '.' && args[1][1] == '.') {
+        // this might segfault on '.' and '~' ?????
+        // expand .. to parent wd
+    } else if (args[1][0] == '.') {
+        // expend . to cwd 
+    } else {
+        // absolute path 
+    }
+
+    // TODO: wildcard matching 
 }
 
 void alias(char** args, int n_args) { 
@@ -156,9 +177,5 @@ void alias(char** args, int n_args) {
 }
 
 void unalias(char** args, int n_args) {
-    //
-}
-
-void bye() {
     //
 }
