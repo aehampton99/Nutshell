@@ -133,7 +133,18 @@ void setenv(char** args, int n_args) {
 }
 
 void printenv(char** args, int n_args) {
-    //
+    if (n_args > 1) {
+        printf("WARNING: EXPECTED 0 ARGUMENTS, GOT %d\n", n_args-1);
+    }
+
+    // TODO print PATH and HOME
+
+    for (int i = 0; i < MAX_ENV; i++) {
+        if(var_table.occupied[i]) {
+            printf("%s = %s\n", var_table.keys[i], var_table.vals[i]);
+        }
+    }
+
 }
 
 void cd(char** args, int n_args) {
