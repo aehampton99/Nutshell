@@ -21,4 +21,7 @@ int cur_alias;
 struct env_vars var_table;
 struct aliases alias_table; 
 
+char *PATH;
+char *HOME;
+
 int call(char** args, int n_args);

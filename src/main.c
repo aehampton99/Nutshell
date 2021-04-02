@@ -67,6 +67,18 @@ void init() {
     for (int i = 0; i < MAX_ALIAS; i++) {
         alias_table.occupied[i] = 0;
     }
+
+    // set HOME
+    var_table.occupied[0] = 1;
+    var_table.keys[0] = "HOME";
+    var_table.vals[0] = "home"; // needs legit default value 
+    HOME = var_table.vals[0]; // make sure this is shallow copy 
+
+    // set PATH
+    var_table.occupied[1] = 1;
+    var_table.keys[1] = "PATH";
+    var_table.vals[1] = "path"; // needs legit default value 
+    PATH = var_table.vals[1];
 }
 
 // main entry point for a command 
@@ -127,9 +139,11 @@ void setenv(char** args, int n_args) {
             var_table.vals[i] = args[2];
             var_table.occupied[i] = 1;
             printf("entered at index %d\n", i);
-            break;
+            return;
         }
     }
+
+    printf("ERROR: MAXIMUM ENVIRONMNET VARIABLES REACHED\n");
 }
 
 void printenv(char** args, int n_args) {
@@ -155,18 +169,6 @@ void cd(char** args, int n_args) {
         return;
     } else if (n_args > 2) {
         printf("WARNING: EXPECTED 1 ARGUMENT, GOT %d\n", n_args-1);
-    }
-
-    // tilde expansion
-    if (args[1][0] == '~') {
-        // expand tilde to home
-    } else if (args[1][0] == '.' && args[1][1] == '.') {
-        // this might segfault on '.' and '~' ?????
-        // expand .. to parent wd
-    } else if (args[1][0] == '.') {
-        // expend . to cwd 
-    } else {
-        // absolute path 
     }
 
     // TODO: wildcard matching 

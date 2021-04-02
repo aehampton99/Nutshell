@@ -6,8 +6,12 @@
 
 %%
 "\n"                            {return RET;}
+" "|"\t"                        {return WS;}
+"~"                             {return TILDE;}
+"."                             {return DOT;}
+".."                            {return DOT2;}
 \"(.*?)\"                       {return QUOTE;}
 "<"|">"|"\|"|"\\"|"&"|"\""      {return META;}
-[^ "\t<>\|\\&\n]+             {yylval.val = strdup(yytext); return WORD;}
+[^~. "\t<>\|\\&\nX][^ "\t<>\|\\&\nX]+             {yylval.val = strdup(yytext); return WORD;}
 %%
 

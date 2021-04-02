@@ -1,6 +1,7 @@
 %{
 #include "init.h"
 #include <stdio.h>
+#include <string.h>
 
 #define MAX_ARGS 100
 
@@ -11,6 +12,7 @@ int yylex();
 int yyparse();
 
 void addArg(char* a);
+char* concat(const char *s1, const char *s2);
 void yyerror(char* e) {
     printf("Error: %s\n", e);
 }
@@ -24,6 +26,7 @@ void yyerror(char* e) {
 %start input
 
 %token RET
+%token WS
 %token QUOTE 
 %token DOT
 %token DOT2
@@ -31,7 +34,7 @@ void yyerror(char* e) {
 %token META
 %token WORD
 
-%type<val> WORD input args
+%type<val> WORD input args param tilde_replace dot_replace dot2_replace
 
 %%
 
@@ -47,9 +50,31 @@ input:
     ;
 
 args:
-    WORD {addArg($1);}
-    | args WORD {addArg($2);}
+    param {printf("word"); addArg($1);}
+    | args WS param {addArg($3);}
     ;
+
+param:
+    WORD
+    | tilde_replace
+    | dot_replace
+    | dot2_replace
+    ;
+
+tilde_replace:
+    TILDE {$$ = var_table.vals[0];}
+    | TILDE WORD {$$ = concat(var_table.vals[0], $2);}
+    ;
+
+dot_replace:
+    DOT {$$ = "CWD";}
+    | DOT WORD {$$ = concat("CWD", $2);}
+    ;
+
+dot2_replace: 
+    DOT2 {$$ = "PARENT";}
+    | DOT2 WORD {$$ = concat("PARENT", $2);}
+
 
 %% 
 
@@ -58,3 +83,16 @@ void addArg(char* a) {
     N_ARGS++;
 }
 
+char* concat(const char *s1, const char *s2)
+{   
+    const size_t len1 = strlen(s1);
+    const size_t len2 = strlen(s2);
+
+    char *result = malloc(len1 + len2 + 1); // +1 for the null-terminator
+
+    for (int i = 0; i < len1; i++)
+        result[i] = s1[i];
+    strcat(result, s2);
+
+    return result;
+}
