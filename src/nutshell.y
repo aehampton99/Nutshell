@@ -28,13 +28,11 @@ void yyerror(char* e) {
 %token RET
 %token WS
 %token QUOTE 
-%token DOT
-%token DOT2
 %token TILDE
 %token META
 %token WORD
 
-%type<val> WORD input args param tilde_replace dot_replace dot2_replace
+%type<val> WORD input args param tilde_replace 
 
 %%
 
@@ -50,31 +48,21 @@ input:
     ;
 
 args:
-    param {printf("word"); addArg($1);}
+    param {addArg($1);}
     | args WS param {addArg($3);}
     ;
 
 param:
     WORD
     | tilde_replace
-    | dot_replace
-    | dot2_replace
+    // | dot_replace
+    // | dot2_replace
     ;
 
 tilde_replace:
     TILDE {$$ = var_table.vals[0];}
     | TILDE WORD {$$ = concat(var_table.vals[0], $2);}
     ;
-
-dot_replace:
-    DOT {$$ = "CWD";}
-    | DOT WORD {$$ = concat("CWD", $2);}
-    ;
-
-dot2_replace: 
-    DOT2 {$$ = "PARENT";}
-    | DOT2 WORD {$$ = concat("PARENT", $2);}
-
 
 %% 
 

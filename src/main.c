@@ -2,6 +2,7 @@
 #include "nutshell.tab.h"
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 int yylex();
 extern char* yytext;
@@ -169,6 +170,15 @@ void cd(char** args, int n_args) {
         return;
     } else if (n_args > 2) {
         printf("WARNING: EXPECTED 1 ARGUMENT, GOT %d\n", n_args-1);
+    }
+
+    // cd
+    if (!chdir(args[1])) {
+        char cwd[150];
+        getcwd(cwd, sizeof(cwd));
+        printf("%s\n", cwd);
+    } else {
+        printf("ERROR: NOT A DIRECTORY: %s\n", args[1]);
     }
 
     // TODO: wildcard matching 
