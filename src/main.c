@@ -14,7 +14,8 @@ void unsetenv(char** args, int n_args);
 void printenv(char** args, int n_args);
 void cd(char** args, int n_args);
 void alias(char** args, int n_args);
-void unalias(char** args, int n_args); 
+void unalias(char** args, int n_args);
+void call_extern();
 
 int main() {
     init();
@@ -80,7 +81,21 @@ int call(char** args, int n_args) {
     }
 
     return 0;
+}
 
+void call_extern(char** args, int n_args) {
+    // for each in path 
+    char* path_copy[strlen(var_table.vals[1])];
+    strcpy(path_copy, var_table.vals[1]);
+    char* token;
+
+    token = strtok(path_copy, ":");
+
+    while (token != NULL) {
+        // try to execute
+        printf("executing %s in %s\n", args[0], token);
+        token = strtok(NULL, ":");
+    }
 }
 
 void setenv(char** args, int n_args) {
@@ -121,7 +136,6 @@ void printenv(char** args, int n_args) {
     }
 
     // TODO print PATH and HOME
-
     for (int i = 0; i < MAX_ENV; i++) {
         if(var_table.occupied[i]) {
             printf("%s = %s\n", var_table.keys[i], var_table.vals[i]);
@@ -185,7 +199,7 @@ void alias(char** args, int n_args) {
         printf("ERROR: MAXIMUM ALIASES REACHED\n");
     } else{
         for (int i = 0; i < MAX_ALIAS; i++){
-            printf(alias_table.vals[i]"\n");
+            printf("%s\n", alias_table.vals[i]);
         } 
     }
 }
@@ -201,8 +215,8 @@ void unalias(char** args, int n_args) {
     }
 
     for (int i = 0; i < MAX_ALIAS; i++){
-        if (alias_table.keys[i] == n_args[2]){
-            alias_table.keys[i] = " "
+        if (alias_table.keys[i] == args[2]){
+            alias_table.keys[i] = " ";
             alias_table.vals[i] = " ";
             alias_table.occupied[i] = 0;
         }

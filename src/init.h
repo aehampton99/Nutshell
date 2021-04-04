@@ -2,6 +2,8 @@
 
 #define MAX_ENV 100
 #define MAX_ALIAS 100
+#define MAX_PATHS 150
+#define MAX_PATH_CHAR 300
 
 struct env_vars {
     int occupied[MAX_ENV];
@@ -25,4 +27,3 @@ char *PATH;
 char *HOME;
 
 int call(char** args, int n_args);
-int check_path();
