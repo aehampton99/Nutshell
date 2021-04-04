@@ -77,7 +77,7 @@ int call(char** args, int n_args) {
     } else if (strcmp(cmd, "bye") == 0) {
         return 1;
     } else {
-        // extern 
+        call_extern(args, n_args); 
     }
 
     return 0;
@@ -91,9 +91,17 @@ void call_extern(char** args, int n_args) {
 
     token = strtok(path_copy, ":");
 
+    char* result[MAX_PATH_CHAR];
     while (token != NULL) {
         // try to execute
         printf("executing %s in %s\n", args[0], token);
+
+        strcpy(result, token);
+        strcat(result, "/");
+        strcat(result, args[0]);
+
+        printf("executing %s\n", result);
+
         token = strtok(NULL, ":");
     }
 }
