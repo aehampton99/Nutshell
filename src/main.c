@@ -26,38 +26,6 @@ int main() {
             break;
     }
     printf("...done\n");
-
-    // while(1) {
-    //     int token = yylex();
-    //     if (token == 0) break;
-
-    //     if (token == BUILT_IN) {
-    //         printf("BUILT_IN\n");
-    //         printf("%s\n", yytext);
-    //     } else if (token == DOT) {
-    //         printf("DOT\n");
-    //         printf("%s\n", yytext);
-    //     } else if (token == DOT2) {
-    //         printf("DOT2\n");
-    //         printf("%s\n", yytext);
-    //     } else if (token == TILDE) {
-    //         printf("TILDE\n");
-    //         printf("%s\n", yytext);
-    //     } else if (token == META) {
-    //         printf("META\n");
-    //         printf("%s\n", yytext);
-    //     } else if (token == WORD) {
-    //         printf("WORD\n");
-    //         printf("%s\n", yytext);
-    //     } else if (token == QUOTE) {
-    //         printf("QUOTE\n");
-    //         printf("%s\n", yytext);
-    //     } else if (token == WS) {
-    //         printf("WS\n");
-    //         printf("%s\n", yytext);
-    //     }
-    // }
-
 }
 
 void init() {
@@ -170,6 +138,7 @@ void cd(char** args, int n_args) {
         return;
     } else if (n_args > 2) {
         printf("WARNING: EXPECTED 1 ARGUMENT, GOT %d\n", n_args-1);
+        // dont we need return; ?
     }
 
     // cd
@@ -185,9 +154,57 @@ void cd(char** args, int n_args) {
 }
 
 void alias(char** args, int n_args) { 
-    //
+    if(n_args == 2){
+        printf("ERROR: EXPECTED 0 OR 2 ARGUMENTS, GOT 1\n");
+        return;
+    } else if (n_args > 3){
+        printf("ERROR: EXPECTED 0 OR 2 ARGUMENTS, GOT %d\n", n_args-1);
+        return;
+    }
+
+    if (n_args == 3){
+        // check if currently in the table 
+        for (int i = 0; i < MAX_ALIAS; i++) {
+            if(alias_table.occupied[i] == 1 && strcmp(args[1], alias_table.keys[i]) == 0) {
+                alias_table.vals[i] = args[2];
+                return;
+            }
+        }
+
+        // if not in table, put into the first unoccupied space 
+        for (int i = 0; i < MAX_ALIAS; i++) {
+            if (alias_table.occupied[i] == 0) {
+                alias_table.keys[i] = args[1];
+                alias_table.vals[i] = args[2];
+                alias_table.occupied[i] = 1;
+                printf("entered at index %d\n", i);
+                return;
+            }
+        }
+
+        printf("ERROR: MAXIMUM ALIASES REACHED\n");
+    } else{
+        for (int i = 0; i < MAX_ALIAS; i++){
+            printf(alias_table.vals[i]"\n");
+        } 
+    }
 }
 
 void unalias(char** args, int n_args) {
-    //
+    if (n_args == 0){
+        printf("ERROR: EXPECTED 1 ARGUMENT, GOT 0\n");
+        return;
+    }
+    else if (n_args > 2){
+        printf("ERROR: EXPECTED 1 ARGUMENT, GOT %d\n", n_args-1);
+        return;
+    }
+
+    for (int i = 0; i < MAX_ALIAS; i++){
+        if (alias_table.keys[i] == n_args[2]){
+            alias_table.keys[i] = " "
+            alias_table.vals[i] = " ";
+            alias_table.occupied[i] = 0;
+        }
+    } 
 }

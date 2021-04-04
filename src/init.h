@@ -25,3 +25,4 @@ char *PATH;
 char *HOME;
 
 int call(char** args, int n_args);
+int check_path();
