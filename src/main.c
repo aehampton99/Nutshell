@@ -103,12 +103,6 @@ void call_extern(char** args, int n_args) {
 
         printf("executing %s\n", result);
 
-        // char** ext_args[n_args];
-        // for(int i = 1; i <= n_args; i++){
-        //     ext_args[i-1] = args[i];
-        // }
-        // ext_args[n_args-1] = NULL;
-
         // fork
         pid_t p, wp;
         int status;
@@ -119,21 +113,23 @@ void call_extern(char** args, int n_args) {
         if (p < 0){
             printf("Fork failed.");
         } else if (p == 0){
+            printf("Args 1: %s\n", args[0]);
+            printf("Args 2: %s\n", args[1]);
+            printf("Number of args: %d\n", n_args);
+
             char cwd[150];
             getcwd(cwd, sizeof(cwd));
             printf("%s\n", cwd);
-            int worked = execv(result, args);
+
+            int worked = execvp(result, args);
             if (worked == -1){
                 printf("Execution failed.\n");
             }
-            exit(0);
+            exit(&p);
         }
-        else{
+        else {
             wait(0);
         }
-
-        // check if that worked 
-        // if not go next 
 
         // go next 
         token = strtok(NULL, ":");
@@ -194,7 +190,7 @@ void cd(char** args, int n_args) {
         return;
     } else if (n_args > 2) {
         printf("WARNING: EXPECTED 1 ARGUMENT, GOT %d\n", n_args-1);
-        // dont we need return; ?
+        return;
     }
 
     // cd
@@ -240,7 +236,12 @@ void alias(char** args, int n_args) {
 
         printf("ERROR: MAXIMUM ALIASES REACHED\n");
     } else{
+        printf("Args 1: %s\n", args[0]);
+        printf("Args 2: %s\n", args[1]);
         for (int i = 0; i < MAX_ALIAS; i++){
+            if (alias_table.occupied[i] == 0){
+                continue;
+            }
             printf("%s\n", alias_table.vals[i]);
         } 
     }

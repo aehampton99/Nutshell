@@ -509,7 +509,7 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    40,    40,    41,    51,    52,    56,    57,    63,    64
+       0,    40,    40,    41,    52,    53,    57,    58,    64,    65
 };
 #endif
 
@@ -1088,38 +1088,39 @@ yyreduce:
         printf("Calling\n");
         int ret = call(args, N_ARGS);
         N_ARGS = 0;
+        memset(args, 0, sizeof(args));
         if (ret)
             YYABORT;
         YYACCEPT;}
-#line 1095 "nutshell.tab.c"
+#line 1096 "nutshell.tab.c"
     break;
 
   case 4: /* args: param  */
-#line 51 "nutshell.y"
+#line 52 "nutshell.y"
           {addArg((yyvsp[0].val));}
-#line 1101 "nutshell.tab.c"
+#line 1102 "nutshell.tab.c"
     break;
 
   case 5: /* args: args WS param  */
-#line 52 "nutshell.y"
+#line 53 "nutshell.y"
                     {addArg((yyvsp[0].val));}
-#line 1107 "nutshell.tab.c"
+#line 1108 "nutshell.tab.c"
     break;
 
   case 8: /* tilde_replace: TILDE  */
-#line 63 "nutshell.y"
+#line 64 "nutshell.y"
           {(yyval.val) = var_table.vals[0];}
-#line 1113 "nutshell.tab.c"
+#line 1114 "nutshell.tab.c"
     break;
 
   case 9: /* tilde_replace: TILDE WORD  */
-#line 64 "nutshell.y"
+#line 65 "nutshell.y"
                  {(yyval.val) = concat(var_table.vals[0], (yyvsp[0].val));}
-#line 1119 "nutshell.tab.c"
+#line 1120 "nutshell.tab.c"
     break;
 
 
-#line 1123 "nutshell.tab.c"
+#line 1124 "nutshell.tab.c"
 
       default: break;
     }
@@ -1313,7 +1314,7 @@ yyreturn:
   return yyresult;
 }
 
-#line 67 "nutshell.y"
+#line 68 "nutshell.y"
  
 
 void addArg(char* a) {
