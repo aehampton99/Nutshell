@@ -1,12 +1,12 @@
 #include <stdio.h>
+#include "nutshell.tab.h"
 
-void printPrompt(){
-    printf("Nutshell : ");
-}
+extern int yyparse(); 
+extern char* yytext;
 
 int main(){
 
     while(1){
-        printPrompt();
+        yyparse();
     }
 }

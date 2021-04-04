@@ -1,14 +1,13 @@
 %{
-    #include types.h
-}$
+    #include "nutshell.tab.h"
+%}
 
 %%
-setenv|printenv|unsetenv|cd|alias|unalias|bye		yylval.val = yytext; return BUILTIN;
-"."|".."|"\\"|"["|"]"|"~"					yylval.val = yytext; return META;
-\"(.*?)\"                       yylval.val = yytext; return QUOTE;
-[A-Za-z]* 						yylval.val = yytext; return WORD;
--[A-Za-z]*						yylval.val = yytext; return FLAG;
-" "|"\t"                  yylval.val = yytext; return WHITESPACE;
-.                               yylval.val = yytext; return UNDEFINED;
-
+\"(.*?)\"                                           yylval.val = yytext; return QUOTE;
+setenv|printenv|unsetenv|cd|alias|unalias		    yylval.val = yytext; return BUILTIN;
+bye                                                 yylval.val = yytext; return EXIT;
+"\\"|"["|"]"|"~"|"<"|">"					        yylval.val = yytext; return META;
+"."                                                 yylval.val = yytext; return DOT;
+".."                                                yylval.val = yytext; return DOTDOT;
+[^ "\t<>\|\\&\n.~]+					                yylval.val = yytext; return WORD;
 %%
