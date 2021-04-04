@@ -3,14 +3,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 int yylex();
 extern char* yytext;
 extern int yyparse();
 
 void init();
-void setenv(char** args, int n_args);
-void unsetenv(char** args, int n_args);
+void setenvir(char** args, int n_args);
+//void unsetenvir(char** args, int n_args);
 void printenv(char** args, int n_args);
 void cd(char** args, int n_args);
 void alias(char** args, int n_args);
@@ -47,7 +48,7 @@ void init() {
     // set PATH
     var_table.occupied[1] = 1;
     var_table.keys[1] = "PATH";
-    var_table.vals[1] = "path"; // needs legit default value 
+    var_table.vals[1] = "/bin"; // needs legit default value 
     PATH = var_table.vals[1];
 }
 
@@ -62,12 +63,12 @@ int call(char** args, int n_args) {
     // check for built in command 
     char* cmd = args[0];
 
-    if (strcmp(cmd, "setenv") == 0) {
-        setenv(args, n_args);
+    if (strcmp(cmd, "setenvir") == 0) {
+        setenvir(args, n_args);
     } else if (strcmp(cmd, "printenv") == 0) {
         printenv(args, n_args);
-    } else if (strcmp(cmd, "unsetenv") == 0) {
-        unsetenv(args, n_args);
+    // } else if (strcmp(cmd, "unsetenvir") == 0) {
+    //     unsetenvir(args, n_args);
     } else if (strcmp(cmd, "cd") == 0) {
         cd(args, n_args);
     } else if (strcmp(cmd, "alias") == 0) {
@@ -102,11 +103,44 @@ void call_extern(char** args, int n_args) {
 
         printf("executing %s\n", result);
 
+        // char** ext_args[n_args];
+        // for(int i = 1; i <= n_args; i++){
+        //     ext_args[i-1] = args[i];
+        // }
+        // ext_args[n_args-1] = NULL;
+
+        // fork
+        pid_t p, wp;
+        int status;
+
+        p = fork();
+
+        // check fork worked
+        if (p < 0){
+            printf("Fork failed.");
+        } else if (p == 0){
+            char cwd[150];
+            getcwd(cwd, sizeof(cwd));
+            printf("%s\n", cwd);
+            int worked = execv(result, args);
+            if (worked == -1){
+                printf("Execution failed.\n");
+            }
+            exit(0);
+        }
+        else{
+            wait(0);
+        }
+
+        // check if that worked 
+        // if not go next 
+
+        // go next 
         token = strtok(NULL, ":");
     }
 }
 
-void setenv(char** args, int n_args) {
+void setenvir(char** args, int n_args) {
     //
     printf("SET ENV %s = %s\n", args[1], args[2]);
 
