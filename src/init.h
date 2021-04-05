@@ -2,6 +2,7 @@
 
 #define MAX_ENV 100
 #define MAX_ALIAS 100
+#define MAX_PATH_CHAR 300
 
 struct env_vars {
     int occupied[MAX_ENV];
