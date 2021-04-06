@@ -136,6 +136,33 @@ void call_extern(char** args, int n_args) {
     }
 }
 
+void piped(char*** cmds, int n_cmds, int* n_cmd_args){
+    for (int i = 0; i < n_args; i++){
+        char** args = cmds[i];
+        int n_args = n_cmd_args[i];
+        
+        int fd[2];
+        int test1 = pipe(fd);
+
+        dup(fd[1], fileno(stdout));
+
+        if (test1 == -1){
+            return 1;
+        }
+
+        char* output[INT8_MAX];
+        read(fd[0], &output, INT8_MAX);
+        close(fd[0]);
+
+        args[n_args] = output;
+
+        call(args, n_args);
+
+        write(fd[1], &output, INT8_MAX);
+        close(fd[1]);
+    }
+}
+
 void setenvir(char** args, int n_args) {
     //
     printf("SET ENV %s = %s\n", args[1], args[2]);
