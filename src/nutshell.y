@@ -66,6 +66,11 @@ tilde_replace:
 
 remove_quote: 
     QUOTE {$$[strlen($$)-1] = '\0'; $$ = $1 + 1; printf("%s\n", $$);}
+    ;
+
+get_env:
+    ENV
+    ;
 
 %% 
 
