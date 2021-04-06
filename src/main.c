@@ -17,6 +17,7 @@ void cd(char** args, int n_args);
 void alias(char** args, int n_args);
 void unalias(char** args, int n_args);
 void call_extern();
+void piped(char*** cmds, int n_cmds, int n_cmd_args);
 
 int main() {
     init();
@@ -62,6 +63,7 @@ int call(char** args, int n_args) {
     // TODO: check for aliases first 
     // check for built in command 
     char* cmd = args[0];
+    printf("Command: %s\n", cmd);
 
     if (strcmp(cmd, "setenvir") == 0) {
         setenvir(args, n_args);
@@ -77,7 +79,14 @@ int call(char** args, int n_args) {
         unalias(args, n_args);
     } else if (strcmp(cmd, "bye") == 0) {
         return 1;
-    } else {
+    } else if (strcmp(cmd, "hey") == 0){
+        printf("I am here 1. \n");
+        char*** cmds = {{"cat", "test.txt"}, {"less"}};
+        printf("I am here 2. \n");
+        int n_args = {2, 1};
+        printf("I am here 3. \n");
+        piped(cmds, 2, n_args);
+    }else {
         call_extern(args, n_args); 
     }
 
@@ -136,30 +145,47 @@ void call_extern(char** args, int n_args) {
     }
 }
 
-void piped(char*** cmds, int n_cmds, int* n_cmd_args){
-    for (int i = 0; i < n_args; i++){
+void piped(char*** cmds, int n_cmds, int n_cmd_args){
+    printf("I am here 4. \n");
+    for (int i = 0; i < 1; i++){
+        printf("I am here 5. \n");
         char** args = cmds[i];
+        printf("I am here 6. \n");
         int n_args = n_cmd_args[i];
+        printf("I am here 7. \n");
         
-        int fd[2];
-        int test1 = pipe(fd);
+    //     int fd[2];
+    //     pid_t p;
+    //     char* output[INT8_MAX];
 
-        dup(fd[1], fileno(stdout));
+    //     if (pipe(fd) < 0){
+    //         printf("Houston we have a problem.");
+    //         return;
+    //     }
 
-        if (test1 == -1){
-            return 1;
-        }
+    //     p = fork();
+    //     if (p < 0){
+    //         printf("Baby 1, I am not working.");
+    //     } else if (p == 0){
 
-        char* output[INT8_MAX];
-        read(fd[0], &output, INT8_MAX);
-        close(fd[0]);
+    //         printf("I made it to being a child.\n");
 
-        args[n_args] = output;
+    //         dup2(fd[1], STDOUT_FILENO);
+    //         close(fd[0]);
+    //         close(fd[1]);
+    //     } else {
+    //         wait(0);
 
-        call(args, n_args);
+    //         printf("I am the parent now.\n");
 
-        write(fd[1], &output, INT8_MAX);
-        close(fd[1]);
+    //         close(fd[1]);
+    //         read(fd[0], &output, INT8_MAX);
+    //         close(fd[0]);
+
+    //         args[n_args] = output;
+    //         n_args++;
+    //         call_extern(args, n_args);
+    //     }
     }
 }
 
