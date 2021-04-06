@@ -8,7 +8,7 @@
 "\n"                            {return RET;}
 " "|"\t"                        {return WS;}
 "~"                             {return TILDE;}
-\"(.*?)\"                       {return QUOTE;}
+\"(.*?)\"                       {yylval.val = strdup(yytext); return QUOTE;}
 "<"|">"|"\|"|"\\"|"&"|"\""      {return META;}
 [^~ "\t<>\|\\&\nX][^ "\t<>\|\\&\nX]*             {yylval.val = strdup(yytext); return WORD;}
 %%

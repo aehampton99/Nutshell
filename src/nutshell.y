@@ -32,7 +32,7 @@ void yyerror(char* e) {
 %token META
 %token WORD
 
-%type<val> WORD input args param tilde_replace 
+%type<val> WORD QUOTE input args param tilde_replace remove_quote
 
 %%
 
@@ -55,15 +55,17 @@ args:
 
 param:
     WORD
+    | remove_quote
     | tilde_replace
-    // | dot_replace
-    // | dot2_replace
     ;
 
 tilde_replace:
     TILDE {$$ = var_table.vals[0];}
     | TILDE WORD {$$ = concat(var_table.vals[0], $2);}
     ;
+
+remove_quote: 
+    QUOTE {$$[strlen($$)-1] = '\0'; $$ = $1 + 1; printf("%s\n", $$);}
 
 %% 
 
