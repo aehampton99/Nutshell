@@ -80,7 +80,7 @@ int call(char** args, int n_args) {
     } else if (strcmp(cmd, "bye") == 0) {
         return 1;
     } else if (strcmp(cmd, "hey") == 0){
-        char*** cmds[] = {{"cat", "test.txt"}, {"more"}};
+        char*** cmds[] = {{"cat", "test.txt"}, {"less"}};
         int n_cmd_args[] = {2, 1};
         printf("I am here 1. \n");
         piped(cmds, 2, n_cmd_args);
@@ -166,28 +166,34 @@ void piped(char*** cmds, int n_cmds, int* n_cmd_args){
     if (p < 0){
         printf("Baby 1, I am not working.\n");
     } else if (p == 0){
-        dup2(fd[0], STD);
-        close(fd[1]);
+
         close(fd[0]);
+        dup2(fd[1], stdout);
+        close(fd[1]);
+
+        printf("Child 1.\n");
+
+        call_extern(args1, n_args1); 
+    } else{
 
         p2 = fork();
 
         if (p2 < 0){
             printf("Baby 2, I am not working.\n");
         } else if (p2 == 0){
-            dup2(fd[1], STDOUT_FILENO);
-            close(fd[0]);
             close(fd[1]);
+            dup2(fd[0], stdin);
+            close(fd[0]);
 
-            call(args1, n_args1);
+            printf("Child 2.\n");
+
+            call_extern(args2, n_args2);
+        } else {
+            // parent executing, waiting for two children
+            wait(&p);
+            wait(&p2);
         }
-        wait(NULL);
-        call(args2, n_args2);
-    } else{
-        close(fd[1]);
-        close(fd[0]);
-        wait(NULL);
-    }
+    } 
 
     // char** prev = cmds[0];
     // int n_args_prev = n_cmd_args[0];
