@@ -15,6 +15,8 @@ void addArg(char* a);
 char* concat(const char *s1, const char *s2);
 char* getEnv(char* s);
 void yyerror(char* e) {
+    N_ARGS = 0;
+    memset(args, 0, sizeof(args));
     printf("Error: %s\n", e);
 }
 %}
@@ -42,11 +44,9 @@ input:
     %empty
     | input args RET{
         printf("Calling\n");
-        int ret = call(args, N_ARGS);
+        call(args, N_ARGS);
         N_ARGS = 0;
         memset(args, 0, sizeof(args));
-        if (ret)
-            YYABORT;
         YYACCEPT;}
     ;
 
@@ -74,8 +74,10 @@ remove_quote:
 env_var:
     ENV {
         char* val = getEnv($1);
-        if(strlen(val) == 0)
+        if(strlen(val) == 0) {
+            yyerror("VARIABLE NOT FOUND");
             YYABORT;
+        }
         $$ = val; }
     ;
 
@@ -95,7 +97,6 @@ char* getEnv(char* s) {
             return var_table.vals[i];
         }
     }
-    printf("ERROR: %s NOT FOUND\n", varName);
     return "\0";
 }
 
