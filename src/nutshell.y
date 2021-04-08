@@ -13,6 +13,7 @@ int yyparse();
 
 void addArg(char* a);
 char* concat(const char *s1, const char *s2);
+char* getEnv(char* s);
 void yyerror(char* e) {
     printf("Error: %s\n", e);
 }
@@ -29,10 +30,11 @@ void yyerror(char* e) {
 %token WS
 %token QUOTE 
 %token TILDE
+%token ENV
 %token META
 %token WORD
 
-%type<val> WORD QUOTE input args param tilde_replace remove_quote
+%type<val> WORD QUOTE input args param tilde_replace remove_quote ENV env_var
 
 %%
 
@@ -57,6 +59,7 @@ param:
     WORD
     | remove_quote
     | tilde_replace
+    | env_var
     ;
 
 tilde_replace:
@@ -65,11 +68,15 @@ tilde_replace:
     ;
 
 remove_quote: 
-    QUOTE {$$[strlen($$)-1] = '\0'; $$ = $1 + 1; printf("%s\n", $$);}
+    QUOTE {$$[strlen($1)-1] = '\0'; $$ = $1 + 1; printf("%s\n", $$);}
     ;
 
-get_env:
-    ENV
+env_var:
+    ENV {
+        char* val = getEnv($1);
+        if(strlen(val) == 0)
+            YYABORT;
+        $$ = val; }
     ;
 
 %% 
@@ -77,6 +84,19 @@ get_env:
 void addArg(char* a) {
     args[N_ARGS] = a;
     N_ARGS++;
+}
+
+char* getEnv(char* s) {
+    s[strlen(s)-1] = '\0';
+    char* varName = s + 2;
+
+    for (int i = 0; i < MAX_ENV; i++) {
+        if (var_table.occupied[i] == 1 && strcmp(varName, var_table.keys[i]) == 0) {
+            return var_table.vals[i];
+        }
+    }
+    printf("ERROR: %s NOT FOUND\n", varName);
+    return "\0";
 }
 
 char* concat(const char *s1, const char *s2)

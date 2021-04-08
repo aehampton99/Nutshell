@@ -22,10 +22,11 @@ int main() {
     init();
     printf("Nutshell\n");
 
-    while(1) {
+    while(BYE == 0) {
         printf(">");
-        if (yyparse() == 1)
-            break;
+        yyparse();
+        // if (yyparse() == 1)
+        //     break;
     }
     printf("...done\n");
 }
@@ -50,6 +51,9 @@ void init() {
     var_table.keys[1] = "PATH";
     var_table.vals[1] = "/bin"; // needs legit default value 
     PATH = var_table.vals[1];
+
+    // set BYE
+    BYE = 0;
 }
 
 // main entry point for a command 
@@ -63,7 +67,7 @@ int call(char** args, int n_args) {
     // check for built in command 
     char* cmd = args[0];
 
-    if (strcmp(cmd, "setenvir") == 0) {
+    if (strcmp(cmd, "setenv") == 0) {
         setenvir(args, n_args);
     } else if (strcmp(cmd, "printenv") == 0) {
         printenv(args, n_args);
@@ -76,7 +80,7 @@ int call(char** args, int n_args) {
     } else if (strcmp(cmd, "unalias") == 0) {
         unalias(args, n_args);
     } else if (strcmp(cmd, "bye") == 0) {
-        return 1;
+        BYE = 1;
     } else {
         call_extern(args, n_args); 
     }
