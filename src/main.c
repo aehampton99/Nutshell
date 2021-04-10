@@ -17,7 +17,11 @@ void cd(char** args, int n_args);
 void alias(char** args, int n_args);
 void unalias(char** args, int n_args);
 void call_extern(char** args, int n_args);
+<<<<<<< HEAD
 void piped();
+=======
+void piped(char*** cmds, int n_cmds, int* n_cmd_args);
+>>>>>>> b45ff47c977e425346dff5b434fc711768e720fa
 
 int main() {
     init();
@@ -79,6 +83,7 @@ int call(char** args, int n_args) {
     } else if (strcmp(cmd, "bye") == 0) {
         return 1;
     } else if (strcmp(cmd, "hey") == 0){
+<<<<<<< HEAD
         char* p1[3];
         p1[0] = "cat";
         p1[1] = "test.txt";
@@ -94,6 +99,11 @@ int call(char** args, int n_args) {
 
         int* n_cmd_args = {2, 1};
         piped();
+=======
+        char** cmds[] = {{"ls"}, {"more"}};
+        int n_cmd_args[] = {1, 1};
+        piped(cmds, 2, n_cmd_args);
+>>>>>>> b45ff47c977e425346dff5b434fc711768e720fa
     }else {
         call_extern(args, n_args); 
     }
@@ -141,6 +151,7 @@ void call_extern(char** args, int n_args) {
             getcwd(cwd, sizeof(cwd));
             //printf("%s\n", cwd);
 
+<<<<<<< HEAD
             if(execv(result, args) != -1){
                 worked = 1;
                 break;
@@ -150,6 +161,11 @@ void call_extern(char** args, int n_args) {
             }
 
             exit(&p);
+=======
+            worked = execv(result, args);
+
+            //exit(&p);
+>>>>>>> b45ff47c977e425346dff5b434fc711768e720fa
         }
         else {
            wait(0);
@@ -158,12 +174,38 @@ void call_extern(char** args, int n_args) {
         // go next 
         token = strtok(NULL, ":");
     }
+<<<<<<< HEAD
 
+    if (worked == -1){
+        printf("Execution failed.\n");
+=======
     if (worked == -1){
         printf("Execution failed.\n");
     }
 }
 
+void piped(char*** cmds, int n_cmds, int* n_cmd_args){
+
+    char* p1[3];
+    p1[0] = "cat";
+    p1[1] = "test.txt";
+    p1[2] = NULL;
+
+    char* p2[2];
+    p2[0] = "sort";
+    p2[1] = NULL;
+    
+    int fd[2];
+    pid_t p;
+
+    if (pipe(fd) < 0){
+        printf("Houston we have a problem.\n");
+        return;
+>>>>>>> b45ff47c977e425346dff5b434fc711768e720fa
+    }
+}
+
+<<<<<<< HEAD
 void piped(){
     char *ls[] = {"cat","test.txt", NULL};
     char *grep[] = {"sort", NULL};
@@ -187,6 +229,36 @@ void piped(){
             printf("Houston we have a problem.\n");
             exit(1);
             return;
+=======
+    p = fork();
+
+    if (p < 0){
+        printf("Baby 1 not working.\n");
+    } else if (p == 0){
+
+        dup2(fd[1], STDOUT_FILENO);
+        close(fd[0]);
+
+        call_extern(p1, 3);
+        exit(0);
+    } else{
+        wait(&p);
+
+        p = fork();
+
+        if (p < 0){
+            printf("Baby 2 not working.\n");
+        } else if (p == 0){
+            dup2(fd[0],STDIN_FILENO);
+
+            close(fd[1]);
+            call_extern(p2, 3);
+            exit(0);
+        } else {
+            close(fd[0]);
+            close(fd[1]);
+            wait(&p);
+>>>>>>> b45ff47c977e425346dff5b434fc711768e720fa
         }
         else if (p == 0){
             dup2(fd2[0], STDIN_FILENO);

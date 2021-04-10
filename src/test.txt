@@ -1,3 +1,7 @@
 me
 help
+<<<<<<< HEAD
 anna
+=======
+anna
+>>>>>>> b45ff47c977e425346dff5b434fc711768e720fa
