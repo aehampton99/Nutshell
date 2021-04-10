@@ -16,8 +16,8 @@ void printenv(char** args, int n_args);
 void cd(char** args, int n_args);
 void alias(char** args, int n_args);
 void unalias(char** args, int n_args);
-void call_extern();
-void piped(char*** cmds, int n_cmds, int* n_cmd_args);
+void call_extern(char** args, int n_args);
+void piped();
 
 int main() {
     init();
@@ -49,23 +49,22 @@ void init() {
     // set PATH
     var_table.occupied[1] = 1;
     var_table.keys[1] = "PATH";
-    var_table.vals[1] = "/bin"; // needs legit default value 
+    var_table.vals[1] = "/usr/bin:/bin"; // needs legit default value 
     PATH = var_table.vals[1];
 }
 
 // main entry point for a command 
 int call(char** args, int n_args) {
-    printf("Printing Args in Main.C\n");
-    for (int i = 0; i < n_args; i++) {
-        printf("%s\n", args[i]);
-    }
+    //printf("Printing Args in Main.C\n");
+    //for (int i = 0; i < n_args; i++) {
+    //    printf("%s\n", args[i]);
+    //}
 
     // TODO: check for aliases first 
     // check for built in command 
     char* cmd = args[0];
-    printf("Command: %s\n", cmd);
 
-    if (strcmp(cmd, "setenvir") == 0) {
+    if (strcmp(cmd, "setenv") == 0) {
         setenvir(args, n_args);
     } else if (strcmp(cmd, "printenv") == 0) {
         printenv(args, n_args);
@@ -80,10 +79,21 @@ int call(char** args, int n_args) {
     } else if (strcmp(cmd, "bye") == 0) {
         return 1;
     } else if (strcmp(cmd, "hey") == 0){
-        char*** cmds[] = {{"cat", "test.txt"}, {"less"}};
-        int n_cmd_args[] = {2, 1};
-        printf("I am here 1. \n");
-        piped(cmds, 2, n_cmd_args);
+        char* p1[3];
+        p1[0] = "cat";
+        p1[1] = "test.txt";
+        p1[2] = NULL;
+
+        char* p2[2];
+        p2[0] = "sort";
+        p2[1] = NULL;
+
+        char** cmds[2];
+        cmds[0] = p1;
+        cmds[1] = p2;
+
+        int* n_cmd_args = {2, 1};
+        piped();
     }else {
         call_extern(args, n_args); 
     }
@@ -91,7 +101,9 @@ int call(char** args, int n_args) {
     return 0;
 }
 
-void call_extern(char** args, int* n_args) {
+
+
+void call_extern(char** args, int n_args) {
     // for each in path 
     char* path_copy[strlen(var_table.vals[1])];
     strcpy(path_copy, var_table.vals[1]);
@@ -99,20 +111,21 @@ void call_extern(char** args, int* n_args) {
 
     token = strtok(path_copy, ":");
 
-    char* result[MAX_PATH_CHAR];
+    char* result[INT16_MAX];
+    int worked = 0;
+
     while (token != NULL) {
         // try to execute
-        printf("executing %s in %s\n", args[0], token);
+        //printf("executing %s in %s\n", args[0], token);
 
         strcpy(result, token);
         strcat(result, "/");
         strcat(result, args[0]);
 
-        printf("executing %s\n", result);
+        //printf("executing %s\n", result);
 
         // fork
-        pid_t p, wp;
-        int status;
+        pid_t p;
 
         p = fork();
 
@@ -120,137 +133,83 @@ void call_extern(char** args, int* n_args) {
         if (p < 0){
             printf("Fork failed.");
         } else if (p == 0){
-            printf("Args 1: %s\n", args[0]);
-            printf("Args 2: %s\n", args[1]);
-            printf("Number of args: %d\n", n_args);
+            //printf("Args 1: %s\n", args[0]);
+            //printf("Args 2: %s\n", args[1]);
+            //printf("Number of args: %d\n", n_args);
 
             char cwd[150];
             getcwd(cwd, sizeof(cwd));
-            printf("%s\n", cwd);
+            //printf("%s\n", cwd);
 
-            int worked = execvp(result, args);
-            if (worked == -1){
-                printf("Execution failed.\n");
+            if(execv(result, args) != -1){
+                worked = 1;
+                break;
             }
+            else {
+                worked = -1;
+            }
+
             exit(&p);
         }
         else {
-            wait(0);
+           wait(0);
         }
 
         // go next 
         token = strtok(NULL, ":");
     }
+
+    if (worked == -1){
+        printf("Execution failed.\n");
+    }
 }
 
-void piped(char*** cmds, int n_cmds, int* n_cmd_args){
-    printf("I am here 2. \n");
+void piped(){
+    char *ls[] = {"cat","test.txt", NULL};
+    char *grep[] = {"sort", NULL};
+    //char *wc[] = {"grep", "-v", "'200[456]'", NULL};
+    //char *more[] = {"more", NULL};
+    char **cmd[] = {ls, grep, NULL};
 
-    char** args1 = cmds[0];
-    int n_args1 = n_cmd_args[0];
+    int n_cmd_args[4] = {2, 1};
+    int n_cmds = 2;
 
-    char** args2 = cmds[1];
-    int n_args2 = n_cmd_args[1];
-    
-    int fd[2];
-    pid_t p, p2;
-    char* output[INT8_MAX];
+    int fd1[2], fd2[2];
+    pid_t p;
 
-    if (pipe(fd) < 0){
-        printf("Houston we have a problem.");
-        return;
-    }
+    int i = 0;
+    for (int i = 0; i < n_cmds; i++){
+        pipe(fd1);
 
-    p = fork();
+        p = fork();
 
-    if (p < 0){
-        printf("Baby 1, I am not working.\n");
-    } else if (p == 0){
-
-        close(fd[0]);
-        dup2(fd[1], stdout);
-        close(fd[1]);
-
-        printf("Child 1.\n");
-
-        call_extern(args1, n_args1); 
-    } else{
-
-        p2 = fork();
-
-        if (p2 < 0){
-            printf("Baby 2, I am not working.\n");
-        } else if (p2 == 0){
-            close(fd[1]);
-            dup2(fd[0], stdin);
-            close(fd[0]);
-
-            printf("Child 2.\n");
-
-            call_extern(args2, n_args2);
-        } else {
-            // parent executing, waiting for two children
-            wait(&p);
-            wait(&p2);
+        if (p < 0){
+            printf("Houston we have a problem.\n");
+            exit(1);
+            return;
         }
-    } 
+        else if (p == 0){
+            dup2(fd2[0], STDIN_FILENO);
 
-    // char** prev = cmds[0];
-    // int n_args_prev = n_cmd_args[0];
+            if (cmd[i + 1] != NULL){
+                dup2(fd1[1], STDOUT_FILENO);
+            }
 
-    // for (int i = 0; i < n_cmds; i++){
-    //     char** args = cmds[i];
-    //     int n_args = n_cmd_args[i];
-    //     printf("n_args is %d\n", n_args);
-        
-    //     int fd[2];
-    //     pid_t p, p2;
-    //     char* output[INT8_MAX];
+            close(fd1[0]);
+            call_extern(cmd[i], n_cmd_args[i]);
+            exit(0);
+        }
+        else{
+            wait(&p);
 
-    //     if (pipe(fd) < 0){
-    //         printf("Houston we have a problem.");
-    //         return;
-    //     }
+            close(fd1[1]);
+            fd2[0] = fd1[0];
+        }
+    }
+}
 
-    //     printf("I made it to reading.\n");
-    //     read(STDOUT_FILENO, &output, INT8_MAX);
-    //     close(fd[0]);
-
-    //     args[n_args++] = output;
-
-    //     call(args, n_args);
-
-
-
-    //     // p = fork();
-    //     // if (p < 0){
-    //     //     printf("Baby 1, I am not working.");
-    //     // } else if (p == 0){
-    //     //     printf("I made it to being a child.\n");
-
-    //     //     dup2(fd[0], STDIN_FILENO);
-    //     //     close(fd[0]);
-    //     //     close(fd[1]);
-    //     // } else {
-    //     //     p2 = fork();
-
-    //     //     if (p2 < 0){
-    //     //          printf("Baby 2, I am not working.");
-    //     //     } else if (p2 == 0){
-    //     //         close(fd[1]);
-    //     //         read(fd[0], &output, INT8_MAX);
-    //     //         close(fd[0]);
-    //     //     }
-
-    //     //     wait(&p);
-
-    //     //     printf("I am the parent now.\n");
-
-    //     //     args[n_args] = output;
-    //     //     n_args++;
-    //     //     call_extern(args, n_args);
-    //     // }
-    // }
+void redirection(){
+    
 }
 
 void setenvir(char** args, int n_args) {
