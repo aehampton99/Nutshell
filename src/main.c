@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <fcntl.h>
 
 int yylex();
 extern char* yytext;
@@ -17,11 +18,8 @@ void cd(char** args, int n_args);
 void alias(char** args, int n_args);
 void unalias(char** args, int n_args);
 void call_extern(char** args, int n_args);
-<<<<<<< HEAD
 void piped();
-=======
-void piped(char*** cmds, int n_cmds, int* n_cmd_args);
->>>>>>> b45ff47c977e425346dff5b434fc711768e720fa
+void redirection();
 
 int main() {
     init();
@@ -83,35 +81,13 @@ int call(char** args, int n_args) {
     } else if (strcmp(cmd, "bye") == 0) {
         return 1;
     } else if (strcmp(cmd, "hey") == 0){
-<<<<<<< HEAD
-        char* p1[3];
-        p1[0] = "cat";
-        p1[1] = "test.txt";
-        p1[2] = NULL;
-
-        char* p2[2];
-        p2[0] = "sort";
-        p2[1] = NULL;
-
-        char** cmds[2];
-        cmds[0] = p1;
-        cmds[1] = p2;
-
-        int* n_cmd_args = {2, 1};
-        piped();
-=======
-        char** cmds[] = {{"ls"}, {"more"}};
-        int n_cmd_args[] = {1, 1};
-        piped(cmds, 2, n_cmd_args);
->>>>>>> b45ff47c977e425346dff5b434fc711768e720fa
+        redirection();
     }else {
         call_extern(args, n_args); 
     }
 
     return 0;
 }
-
-
 
 void call_extern(char** args, int n_args) {
     // for each in path 
@@ -151,7 +127,6 @@ void call_extern(char** args, int n_args) {
             getcwd(cwd, sizeof(cwd));
             //printf("%s\n", cwd);
 
-<<<<<<< HEAD
             if(execv(result, args) != -1){
                 worked = 1;
                 break;
@@ -161,11 +136,6 @@ void call_extern(char** args, int n_args) {
             }
 
             exit(&p);
-=======
-            worked = execv(result, args);
-
-            //exit(&p);
->>>>>>> b45ff47c977e425346dff5b434fc711768e720fa
         }
         else {
            wait(0);
@@ -174,38 +144,12 @@ void call_extern(char** args, int n_args) {
         // go next 
         token = strtok(NULL, ":");
     }
-<<<<<<< HEAD
 
-    if (worked == -1){
-        printf("Execution failed.\n");
-=======
     if (worked == -1){
         printf("Execution failed.\n");
     }
 }
 
-void piped(char*** cmds, int n_cmds, int* n_cmd_args){
-
-    char* p1[3];
-    p1[0] = "cat";
-    p1[1] = "test.txt";
-    p1[2] = NULL;
-
-    char* p2[2];
-    p2[0] = "sort";
-    p2[1] = NULL;
-    
-    int fd[2];
-    pid_t p;
-
-    if (pipe(fd) < 0){
-        printf("Houston we have a problem.\n");
-        return;
->>>>>>> b45ff47c977e425346dff5b434fc711768e720fa
-    }
-}
-
-<<<<<<< HEAD
 void piped(){
     char *ls[] = {"cat","test.txt", NULL};
     char *grep[] = {"sort", NULL};
@@ -229,36 +173,6 @@ void piped(){
             printf("Houston we have a problem.\n");
             exit(1);
             return;
-=======
-    p = fork();
-
-    if (p < 0){
-        printf("Baby 1 not working.\n");
-    } else if (p == 0){
-
-        dup2(fd[1], STDOUT_FILENO);
-        close(fd[0]);
-
-        call_extern(p1, 3);
-        exit(0);
-    } else{
-        wait(&p);
-
-        p = fork();
-
-        if (p < 0){
-            printf("Baby 2 not working.\n");
-        } else if (p == 0){
-            dup2(fd[0],STDIN_FILENO);
-
-            close(fd[1]);
-            call_extern(p2, 3);
-            exit(0);
-        } else {
-            close(fd[0]);
-            close(fd[1]);
-            wait(&p);
->>>>>>> b45ff47c977e425346dff5b434fc711768e720fa
         }
         else if (p == 0){
             dup2(fd2[0], STDIN_FILENO);
@@ -268,7 +182,7 @@ void piped(){
             }
 
             close(fd1[0]);
-            call_extern(cmd[i], n_cmd_args[i]);
+            call(cmd[i], n_cmd_args[i]);
             exit(0);
         }
         else{
@@ -281,7 +195,65 @@ void piped(){
 }
 
 void redirection(){
-    
+    char *args[] = {"cat", "missing.txt", "2>", "f.txt", NULL};
+    int n_args = 3;
+
+    int input = 0, output = 0, append = 0;
+    char* cleaned[n_args];
+    int c = 0;
+
+    pid_t p;
+    p = fork();
+
+    if (p < 0){
+        printf("Houston, we have a problem.\n");
+        exit(1);
+        return;
+    } else if (p == 0){
+        for (int i = 0; i < n_args-1; i++){
+            int j = i+1;
+
+            if (!strcmp(args[i], "<")){
+                input = open(args[j], O_RDONLY);
+
+                dup2(input, STDIN_FILENO);
+                close(input);
+                continue;
+            }
+            if (!strcmp(args[i], ">")){
+                output = creat(args[j], 0644);
+
+                dup2(output, STDOUT_FILENO);
+                close(output);
+                continue;
+            }
+            if (!strcmp(args[i], ">>")){
+                append = open(args[j], O_CREAT | O_RDWR | O_APPEND, 0644);
+
+                dup2(append, STDOUT_FILENO);
+                close(append);
+                continue;
+            }
+            if (!strcmp(args[i], "2>")){
+                output = creat(args[j], 0644);
+
+                dup2(output, STDERR_FILENO);
+                close(output);
+                continue;
+            }
+            if (!strcmp(args[i], "2>&1")){
+                dup2(STDOUT_FILENO, STDERR_FILENO);
+                close(STDOUT_FILENO);
+                continue;
+            }
+            cleaned[c++] = args[i];
+        }
+        cleaned[c] = NULL;
+        call(cleaned, c);
+        exit(0);
+    } else {
+        wait(&p);
+    }
 }
 
 void setenvir(char** args, int n_args) {
