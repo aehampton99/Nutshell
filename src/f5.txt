@@ -1,2 +1,3 @@
-HOME = home
-PATH = /usr/bin:/bin
+anna
+help
+me
