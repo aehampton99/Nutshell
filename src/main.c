@@ -314,8 +314,7 @@ void cd(char** args, int n_args) {
 
     // verify args
     if (n_args == 1) {
-        printf("ERROR: EXPECTED 1 ARGUMENT, GOT 0\n");
-        return;
+        args[1] = var_table.vals[0];
     } else if (n_args > 2) {
         printf("WARNING: EXPECTED 1 ARGUMENT, GOT %d\n", n_args-1);
         return;
