@@ -12,7 +12,7 @@ extern int yyparse();
 
 void init();
 void setenvir(char** args, int n_args);
-//void unsetenvir(char** args, int n_args);
+void unsetenvir(char** args, int n_args);
 void printenv(char** args, int n_args);
 void cd(char** args, int n_args);
 void alias(char** args, int n_args);
@@ -74,8 +74,8 @@ int call(char** args, int n_args) {
         setenvir(args, n_args);
     } else if (strcmp(cmd, "printenv") == 0) {
         printenv(args, n_args);
-    // } else if (strcmp(cmd, "unsetenvir") == 0) {
-    //     unsetenvir(args, n_args);
+    } else if (strcmp(cmd, "unsetenv") == 0) {
+        unsetenvir(args, n_args);
     } else if (strcmp(cmd, "cd") == 0) {
         cd(args, n_args);
     } else if (strcmp(cmd, "alias") == 0) {
@@ -292,12 +292,23 @@ void setenvir(char** args, int n_args) {
     printf("ERROR: MAXIMUM ENVIRONMNET VARIABLES REACHED\n");
 }
 
+void unsetenvir(char** args, int n_args) {
+    if (n_args > 2) {
+        printf("WARNING: EXPECTED 1 ARGUMENT, GOT %d\n", n_args-1);
+    }
+
+    for (int i = 0; i < MAX_ENV; i++) {
+        if (var_table.occupied[i] == 1 && strcmp(args[1], var_table.keys[i]) == 0)
+            var_table.occupied[i] = 0;
+    }
+
+}
+
 void printenv(char** args, int n_args) {
     if (n_args > 1) {
         printf("WARNING: EXPECTED 0 ARGUMENTS, GOT %d\n", n_args-1);
     }
 
-    // TODO print PATH and HOME
     for (int i = 0; i < MAX_ENV; i++) {
         if(var_table.occupied[i]) {
             printf("%s = %s\n", var_table.keys[i], var_table.vals[i]);
