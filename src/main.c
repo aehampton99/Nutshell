@@ -52,7 +52,7 @@ void init() {
     // set PATH
     var_table.occupied[1] = 1;
     var_table.keys[1] = "PATH";
-    var_table.vals[1] = "/usr/bin:/bin"; // needs legit default value 
+    var_table.vals[1] = ".:/usr/bin:/bin"; // needs legit default value 
     PATH = var_table.vals[1];
 
     // set BYE
@@ -102,7 +102,7 @@ void call_extern(char** args, int n_args) {
     token = strtok(path_copy, ":");
 
     char* result[INT16_MAX];
-    int worked = 0;
+    int worked = -1;
 
     while (token != NULL) {
         // try to execute
@@ -131,15 +131,11 @@ void call_extern(char** args, int n_args) {
             getcwd(cwd, sizeof(cwd));
             //printf("%s\n", cwd);
 
-            if(execv(result, args) != -1){
-                worked = 1;
-                break;
-            }
-            else {
-                worked = -1;
+            if(execv(result, args) == -1 && !strtok(NULL, ":")) {
+                printf("Could not find command: %s\n", args[0]);
             }
 
-            exit(&p);
+            exit(0);
         }
         else {
            wait(0);
@@ -149,9 +145,6 @@ void call_extern(char** args, int n_args) {
         token = strtok(NULL, ":");
     }
 
-    if (worked == -1){
-        printf("Execution failed.\n");
-    }
 }
 
 void piped(){
