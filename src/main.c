@@ -83,15 +83,10 @@ int call(char** args, int n_args) {
     } else if (strcmp(cmd, "unalias") == 0) {
         unalias(args, n_args);
     } else if (strcmp(cmd, "bye") == 0) {
-<<<<<<< HEAD
         BYE = 1;
-    } else {
-=======
-        return 1;
     } else if (strcmp(cmd, "hey") == 0){
         redirection();
     }else {
->>>>>>> pipes
         call_extern(args, n_args); 
     }
 
