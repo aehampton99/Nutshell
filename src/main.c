@@ -69,10 +69,6 @@ int call(char** args, int n_args) {
     int ampersand = 1;
     int status;
 
-    if (strcmp(cmd, "bye") == 0) {
-        return 1;
-    }
-
     if (strcmp(cmd, "setenv") == 0) {
         setenvir(args, n_args);
     } else if (strcmp(cmd, "printenv") == 0) {
@@ -85,6 +81,8 @@ int call(char** args, int n_args) {
         alias(args, n_args);
     } else if (strcmp(cmd, "unalias") == 0) {
         unalias(args, n_args);
+    } else if(strcmp(cmd, "bye") == 0){
+        return 1;
     } else if (strcmp(cmd, "hey") == 0){
         redirection();
     }else {
@@ -103,37 +101,40 @@ void call_extern(char** args, int n_args) {
     token = strtok(path_copy, ":");
 
     char* result[INT16_MAX];
-    int worked = -1;
 
-    while (token != NULL) {
-        strcpy(result, token);
-        strcat(result, "/");
-        strcat(result, args[0]);
+    // fork
+    pid_t p;
 
-        // fork
-        pid_t p;
+    p = fork();
 
-        p = fork();
+    // check fork worked
+    if (p < 0){
+        printf("Fork failed.");
+    } else if (p == 0){
+        int worked = 0;
+        while (token != NULL) {
+            strcpy(result, token);
+            strcat(result, "/");
+            strcat(result, args[0]);
 
-        // check fork worked
-        if (p < 0){
-            printf("Fork failed.");
-        } else if (p == 0){
-            char cwd[150];
-            getcwd(cwd, sizeof(cwd));
-
-            if(execv(result, args) == -1 && !strtok(NULL, ":")){
-                printf("Could not find command: %s\n", args[0]);
+            if(execv(result, args) != -1){
+                worked = 1;
+                break;
             }
-
-            exit(0);
+            else {
+                worked = -1;
+            }
+            // go next 
+            token = strtok(NULL, ":");
         }
-        else {
-           wait(0);
-        }
 
-        // go next 
-        token = strtok(NULL, ":");
+        if (worked == -1){
+            printf("Could not find command: %s\n", args[0]);
+        }
+        exit(0);
+    }
+    else {
+        wait(0);
     }
 
 }
