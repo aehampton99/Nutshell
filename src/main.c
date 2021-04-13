@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <fcntl.h>
 
 int yylex();
 extern char* yytext;
@@ -16,7 +17,9 @@ void printenv(char** args, int n_args);
 void cd(char** args, int n_args);
 void alias(char** args, int n_args);
 void unalias(char** args, int n_args);
-void call_extern();
+void call_extern(char** args, int n_args);
+void piped();
+void redirection();
 
 int main() {
     init();
@@ -49,7 +52,7 @@ void init() {
     // set PATH
     var_table.occupied[1] = 1;
     var_table.keys[1] = "PATH";
-    var_table.vals[1] = "/bin"; // needs legit default value 
+    var_table.vals[1] = "/usr/bin:/bin"; // needs legit default value 
     PATH = var_table.vals[1];
 
     // set BYE
@@ -58,10 +61,10 @@ void init() {
 
 // main entry point for a command 
 int call(char** args, int n_args) {
-    printf("Printing Args in Main.C\n");
-    for (int i = 0; i < n_args; i++) {
-        printf("%s\n", args[i]);
-    }
+    //printf("Printing Args in Main.C\n");
+    //for (int i = 0; i < n_args; i++) {
+    //    printf("%s\n", args[i]);
+    //}
 
     // TODO: check for aliases first 
     // check for built in command 
@@ -80,8 +83,15 @@ int call(char** args, int n_args) {
     } else if (strcmp(cmd, "unalias") == 0) {
         unalias(args, n_args);
     } else if (strcmp(cmd, "bye") == 0) {
+<<<<<<< HEAD
         BYE = 1;
     } else {
+=======
+        return 1;
+    } else if (strcmp(cmd, "hey") == 0){
+        redirection();
+    }else {
+>>>>>>> pipes
         call_extern(args, n_args); 
     }
 
@@ -96,20 +106,21 @@ void call_extern(char** args, int n_args) {
 
     token = strtok(path_copy, ":");
 
-    char* result[MAX_PATH_CHAR];
+    char* result[INT16_MAX];
+    int worked = 0;
+
     while (token != NULL) {
         // try to execute
-        printf("executing %s in %s\n", args[0], token);
+        //printf("executing %s in %s\n", args[0], token);
 
         strcpy(result, token);
         strcat(result, "/");
         strcat(result, args[0]);
 
-        printf("executing %s\n", result);
+        //printf("executing %s\n", result);
 
         // fork
-        pid_t p, wp;
-        int status;
+        pid_t p;
 
         p = fork();
 
@@ -117,26 +128,140 @@ void call_extern(char** args, int n_args) {
         if (p < 0){
             printf("Fork failed.");
         } else if (p == 0){
-            printf("Args 1: %s\n", args[0]);
-            printf("Args 2: %s\n", args[1]);
-            printf("Number of args: %d\n", n_args);
+            //printf("Args 1: %s\n", args[0]);
+            //printf("Args 2: %s\n", args[1]);
+            //printf("Number of args: %d\n", n_args);
 
             char cwd[150];
             getcwd(cwd, sizeof(cwd));
-            printf("%s\n", cwd);
+            //printf("%s\n", cwd);
 
-            int worked = execvp(result, args);
-            if (worked == -1){
-                printf("Execution failed.\n");
+            if(execv(result, args) != -1){
+                worked = 1;
+                break;
             }
+            else {
+                worked = -1;
+            }
+
             exit(&p);
         }
         else {
-            wait(0);
+           wait(0);
         }
 
         // go next 
         token = strtok(NULL, ":");
+    }
+
+    if (worked == -1){
+        printf("Execution failed.\n");
+    }
+}
+
+void piped(){
+    char *ls[] = {"cat","test.txt", NULL};
+    char *grep[] = {"sort", NULL};
+    //char *wc[] = {"grep", "-v", "'200[456]'", NULL};
+    //char *more[] = {"more", NULL};
+    char **cmd[] = {ls, grep, NULL};
+
+    int n_cmd_args[4] = {2, 1};
+    int n_cmds = 2;
+
+    int fd1[2], fd2[2];
+    pid_t p;
+
+    int i = 0;
+    for (int i = 0; i < n_cmds; i++){
+        pipe(fd1);
+
+        p = fork();
+
+        if (p < 0){
+            printf("Houston we have a problem.\n");
+            exit(1);
+            return;
+        }
+        else if (p == 0){
+            dup2(fd2[0], STDIN_FILENO);
+
+            if (cmd[i + 1] != NULL){
+                dup2(fd1[1], STDOUT_FILENO);
+            }
+
+            close(fd1[0]);
+            call(cmd[i], n_cmd_args[i]);
+            exit(0);
+        }
+        else{
+            wait(&p);
+
+            close(fd1[1]);
+            fd2[0] = fd1[0];
+        }
+    }
+}
+
+void redirection(){
+    char *args[] = {"cat", "missing.txt", "2>", "f.txt", NULL};
+    int n_args = 3;
+
+    int input = 0, output = 0, append = 0;
+    char* cleaned[n_args];
+    int c = 0;
+
+    pid_t p;
+    p = fork();
+
+    if (p < 0){
+        printf("Houston, we have a problem.\n");
+        exit(1);
+        return;
+    } else if (p == 0){
+        for (int i = 0; i < n_args-1; i++){
+            int j = i+1;
+
+            if (!strcmp(args[i], "<")){
+                input = open(args[j], O_RDONLY);
+
+                dup2(input, STDIN_FILENO);
+                close(input);
+                continue;
+            }
+            if (!strcmp(args[i], ">")){
+                output = creat(args[j], 0644);
+
+                dup2(output, STDOUT_FILENO);
+                close(output);
+                continue;
+            }
+            if (!strcmp(args[i], ">>")){
+                append = open(args[j], O_CREAT | O_RDWR | O_APPEND, 0644);
+
+                dup2(append, STDOUT_FILENO);
+                close(append);
+                continue;
+            }
+            if (!strcmp(args[i], "2>")){
+                output = creat(args[j], 0644);
+
+                dup2(output, STDERR_FILENO);
+                close(output);
+                continue;
+            }
+            if (!strcmp(args[i], "2>&1")){
+                dup2(STDOUT_FILENO, STDERR_FILENO);
+                close(STDOUT_FILENO);
+                continue;
+            }
+            cleaned[c++] = args[i];
+        }
+        cleaned[c] = NULL;
+        call(cleaned, c);
+        exit(0);
+    } else {
+        wait(&p);
     }
 }
 

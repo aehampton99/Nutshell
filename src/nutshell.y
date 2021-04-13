@@ -43,8 +43,13 @@ void yyerror(char* e) {
 input:
     %empty
     | input args RET{
+<<<<<<< HEAD
         printf("Calling\n");
         call(args, N_ARGS);
+=======
+        //printf("Calling\n");
+        int ret = call(args, N_ARGS);
+>>>>>>> pipes
         N_ARGS = 0;
         memset(args, 0, sizeof(args));
         YYACCEPT;}
