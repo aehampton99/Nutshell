@@ -1,0 +1,15 @@
+Makefile
+f1.txt
+f5.txt
+init.h
+lex.yy.c
+listings.txt
+main.c
+nutshell
+nutshell.h
+nutshell.l
+nutshell.tab.c
+nutshell.tab.h
+nutshell.y
+test.txt
+test2.txt

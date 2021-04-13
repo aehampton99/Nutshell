@@ -51,7 +51,7 @@ void init() {
     // set PATH
     var_table.occupied[1] = 1;
     var_table.keys[1] = "PATH";
-    var_table.vals[1] = "/usr/bin:/bin"; // needs legit default value 
+    var_table.vals[1] = ".:/usr/bin:/bin"; // needs legit default value 
     PATH = var_table.vals[1];
 }
 
@@ -66,20 +66,25 @@ int call(char** args, int n_args) {
     // check for built in command 
     char* cmd = args[0];
 
+    int ampersand = 1;
+    int status;
+
+    if (strcmp(cmd, "bye") == 0) {
+        return 1;
+    }
+
     if (strcmp(cmd, "setenv") == 0) {
         setenvir(args, n_args);
     } else if (strcmp(cmd, "printenv") == 0) {
         printenv(args, n_args);
-    // } else if (strcmp(cmd, "unsetenvir") == 0) {
-    //     unsetenvir(args, n_args);
-    } else if (strcmp(cmd, "cd") == 0) {
+    } //else if (strcmp(cmd, "unsetenvir") == 0) {
+    //     unsetenvir(args, n_args);} 
+    else if (strcmp(cmd, "cd") == 0) {
         cd(args, n_args);
     } else if (strcmp(cmd, "alias") == 0) {
         alias(args, n_args);
     } else if (strcmp(cmd, "unalias") == 0) {
         unalias(args, n_args);
-    } else if (strcmp(cmd, "bye") == 0) {
-        return 1;
     } else if (strcmp(cmd, "hey") == 0){
         redirection();
     }else {
@@ -98,17 +103,12 @@ void call_extern(char** args, int n_args) {
     token = strtok(path_copy, ":");
 
     char* result[INT16_MAX];
-    int worked = 0;
+    int worked = -1;
 
     while (token != NULL) {
-        // try to execute
-        //printf("executing %s in %s\n", args[0], token);
-
         strcpy(result, token);
         strcat(result, "/");
         strcat(result, args[0]);
-
-        //printf("executing %s\n", result);
 
         // fork
         pid_t p;
@@ -119,23 +119,14 @@ void call_extern(char** args, int n_args) {
         if (p < 0){
             printf("Fork failed.");
         } else if (p == 0){
-            //printf("Args 1: %s\n", args[0]);
-            //printf("Args 2: %s\n", args[1]);
-            //printf("Number of args: %d\n", n_args);
-
             char cwd[150];
             getcwd(cwd, sizeof(cwd));
-            //printf("%s\n", cwd);
 
-            if(execv(result, args) != -1){
-                worked = 1;
-                break;
-            }
-            else {
-                worked = -1;
+            if(execv(result, args) == -1 && !strtok(NULL, ":")){
+                printf("Could not find command: %s\n", args[0]);
             }
 
-            exit(&p);
+            exit(0);
         }
         else {
            wait(0);
@@ -145,12 +136,9 @@ void call_extern(char** args, int n_args) {
         token = strtok(NULL, ":");
     }
 
-    if (worked == -1){
-        printf("Execution failed.\n");
-    }
 }
 
-void piped(char*** cmd, int* n_cmd_args, int n_cmds){
+void piped(char*** cmds, int* n_cmd_args, int n_cmds){
     // char *ls[] = {"cat","test.txt", NULL};
     // char *grep[] = {"sort", NULL};
     // //char *wc[] = {"grep", "-v", "'200[456]'", NULL};
@@ -177,24 +165,24 @@ void piped(char*** cmd, int* n_cmd_args, int n_cmds){
         else if (p == 0){
             dup2(input, STDIN_FILENO);
 
-            if (cmd[i + 1] != NULL){
+            if (cmds[i + 1] != NULL){
                 dup2(fd1[1], STDOUT_FILENO);
             }
 
             close(fd1[0]);
-            call(cmd[i], n_cmd_args[i]);
+            call(cmds[i], n_cmd_args[i]);
             exit(0);
         }
         else{
             wait(&p);
 
-            close(fd1[1]);
             input = fd1[0];
+            close(fd1[1]);
         }
     }
 }
 
-//void redirection(char** args, int n_args, int piping, char*** cmd, int n_cmd_args, int n_cmds){
+//void redirection(char** args, int n_args, int piping, char*** cmds, int n_cmd_args, int n_cmds){
 void redirection(){
     // when pipes redirection arguments, in this case "args", would begin with the first redirection metacharacter
     // when no pipes, it includes the command and everything else
