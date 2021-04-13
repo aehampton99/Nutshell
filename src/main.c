@@ -339,9 +339,30 @@ void alias(char** args, int n_args) {
     } else if (n_args > 3){
         printf("ERROR: EXPECTED 0 OR 2 ARGUMENTS, GOT %d\n", n_args-1);
         return;
-    }
+    } else if (n_args == 3){
+    
+        if (strcmp(args[1], args[2]) == 0){
+            printf("ERROR, EXPANSION OF \"%s\" WOULD CREATE A LOOP\n", args[1]);
+            return;
+        }
 
-    if (n_args == 3){
+        char* key = args[2]; 
+        while (key) {
+            char* next = NULL;
+            for (int i = 0; i < MAX_ALIAS; i++) {
+                if (alias_table.occupied[i] == 1 && strcmp(key, alias_table.keys[i]) == 0) {
+                    if (strcmp(alias_table.vals[i], args[1]) == 0) {
+                        printf("ERROR, EXPANSION OF \"%s\" WOULD CREATE A LOOP\n", args[1]);
+                        return;
+                    } else {
+                        next = alias_table.vals[i];
+                        break;
+                    }
+                }
+            }
+            key = next;
+        }
+
         // check if currently in the table 
         for (int i = 0; i < MAX_ALIAS; i++) {
             if(alias_table.occupied[i] == 1 && strcmp(args[1], alias_table.keys[i]) == 0) {
@@ -356,20 +377,18 @@ void alias(char** args, int n_args) {
                 alias_table.keys[i] = args[1];
                 alias_table.vals[i] = args[2];
                 alias_table.occupied[i] = 1;
-                printf("entered at index %d\n", i);
+                //printf("entered at index %d\n", i);
                 return;
             }
         }
 
         printf("ERROR: MAXIMUM ALIASES REACHED\n");
+    // TODO: Make this like printenv
     } else{
-        printf("Args 1: %s\n", args[0]);
-        printf("Args 2: %s\n", args[1]);
         for (int i = 0; i < MAX_ALIAS; i++){
-            if (alias_table.occupied[i] == 0){
-                continue;
+            if (alias_table.occupied[i] == 1){
+                printf("%s = %s\n", alias_table.keys[i], alias_table.vals[i]);
             }
-            printf("%s\n", alias_table.vals[i]);
         } 
     }
 }
