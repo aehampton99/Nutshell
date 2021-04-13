@@ -369,13 +369,11 @@ void alias(char** args, int n_args) {
 
         printf("ERROR: MAXIMUM ALIASES REACHED\n");
     } else{
-        printf("Args 1: %s\n", args[0]);
-        printf("Args 2: %s\n", args[1]);
         for (int i = 0; i < MAX_ALIAS; i++){
             if (alias_table.occupied[i] == 0){
                 continue;
             }
-            printf("%s\n", alias_table.vals[i]);
+            printf("%s = %s\n", alias_table.keys[i], alias_table.vals[i]);
         } 
     }
 }
