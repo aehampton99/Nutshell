@@ -185,7 +185,6 @@ void piped(char*** cmds, int* n_cmd_args, int n_cmds){
             wait(&p);
 
             input = fd[0];
-            close(fd[0]);
             close(fd[1]);
         }
     }
