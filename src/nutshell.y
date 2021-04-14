@@ -18,6 +18,8 @@ int yyparse();
 void printargs();
 void print_pipe_args();
 void setup_pipe_input();
+void io_redirection_no_pipes();
+void io_redirection_pipes();
 void addArg(char* a);
 char* concat(const char *s1, const char *s2);
 char* getEnv(char* s);
@@ -42,8 +44,9 @@ void yyerror(char* e) {
 %token META
 %token WORD
 %token PIPE
+%token REDIRECT
 
-%type<val> WORD QUOTE input args param tilde_replace remove_quote ENV env_var
+%type<val> WORD QUOTE input args param tilde_replace remove_quote ENV env_var REDIRECT
 
 %%
 
@@ -62,11 +65,27 @@ input:
         memset(n_per_pipe, 0, sizeof(n_per_pipe));
         memset(args, 0, sizeof(args));
         YYACCEPT;}
+    | input io_redirection RET {
+        // printf("FOUND IO REDIRECT\n");
+        // printargs();
+        io_redirection_no_pipes();
+        N_ARGS = 0;
+        N_PIPES = 0;
+        memset(pipes, 0, sizeof(pipes));
+        memset(n_per_pipe, 0, sizeof(n_per_pipe));
+        memset(args, 0, sizeof(args));
+        YYACCEPT;}
     ;
 
 pipe:
     args PIPE args 
-    | pipe PIPE args
+    | pipe PIPE args 
+    ;
+
+io_redirection:
+    args REDIRECT WORD {addArg($2); addArg($3);}
+    | pipe REDIRECT WORD
+    | io_redirection REDIRECT WORD
     ;
 
 args:
@@ -170,6 +189,13 @@ void setup_pipe_input() {
 
     // call piped 
     piped(cmds, n_per_pipe, N_PIPES);
+}
+
+void io_redirection_no_pipes() {
+    addArg(NULL);
+    int piping = 0;
+    redirection(args+1, N_ARGS-2, 0, NULL, 0, 0);
+    //redirection();
 }
 
 void print_pipe_args() {

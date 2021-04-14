@@ -18,7 +18,6 @@ void cd(char** args, int n_args);
 void alias(char** args, int n_args);
 void unalias(char** args, int n_args);
 void call_extern(char** args, int n_args);
-void redirection();
 
 int main() {
     init();
@@ -83,8 +82,6 @@ int call(char** args, int n_args) {
         unalias(args, n_args);
     } else if (strcmp(cmd, "bye") == 0) {
         BYE = 1;
-    } else if (strcmp(cmd, "hey") == 0){
-        redirection();
     }else {
         call_extern(args, n_args); 
     }
@@ -179,9 +176,31 @@ void piped(char*** cmds, int* n_cmd_args, int n_cmds) {
     }
 }
 
-void redirection(){
-    char *args[] = {"cat", "missing.txt", "2>", "f.txt", NULL};
-    int n_args = 3;
+void redirection(char** args, int n_args, int piping, char*** cmds, int* n_cmd_args, int n_cmds){
+ //void redirection(){
+    // when pipes redirection arguments, in this case "args", would begin with the first redirection metacharacter
+    // when no pipes, it includes the command and everything else
+    // the three possible patterns
+    // command with io redirection -> redirection()
+    // piped commands with io redirection -> redirection()
+    // piped commands -> piped()
+    // everything needs to be NULL terminated
+    // char *args[] = {">", "f5.txt", NULL};
+    // int n_args = 2;
+
+    // char *ls[] = {"cat","test.txt", NULL};
+    // char *grep[] = {"sort", NULL};
+    // char **cmd[] = {ls, grep, NULL};
+    // int n_cmd_args[4] = {2, 1};
+    // int n_cmds = 2;
+
+    // int piping = 1;
+    // char *args[] = {"ls", ">", "test2.txt", NULL};
+    // int piping = 0;
+    // int n_args = 3;
+    // int ***cmds;
+    // int *n_cmd_args;
+    // int n_cmds;
 
     int input = 0, output = 0, append = 0;
     char* cleaned[n_args];
@@ -195,46 +214,55 @@ void redirection(){
         exit(1);
         return;
     } else if (p == 0){
-        for (int i = 0; i < n_args-1; i++){
-            int j = i+1;
-
+        for (int i = 0; i < n_args; i++){
+            int j;
             if (!strcmp(args[i], "<")){
-                input = open(args[j], O_RDONLY);
+                ++i;
+                input = open(args[i], O_RDONLY);
 
                 dup2(input, STDIN_FILENO);
                 close(input);
                 continue;
             }
             if (!strcmp(args[i], ">")){
-                output = creat(args[j], 0644);
+                ++i;
+                output = creat(args[i], 0644);
 
                 dup2(output, STDOUT_FILENO);
                 close(output);
                 continue;
             }
             if (!strcmp(args[i], ">>")){
-                append = open(args[j], O_CREAT | O_RDWR | O_APPEND, 0644);
+                ++i;
+                append = open(args[i], O_CREAT | O_RDWR | O_APPEND, 0644);
 
                 dup2(append, STDOUT_FILENO);
                 close(append);
                 continue;
             }
             if (!strcmp(args[i], "2>")){
-                output = creat(args[j], 0644);
+                ++i;
+                output = creat(args[i], 0644);
 
                 dup2(output, STDERR_FILENO);
                 close(output);
                 continue;
             }
             if (!strcmp(args[i], "2>&1")){
+                ++i;
                 dup2(STDOUT_FILENO, STDERR_FILENO);
-                close(STDOUT_FILENO);
+                close(stdout);
                 continue;
             }
             cleaned[c++] = args[i];
         }
         cleaned[c] = NULL;
-        call(cleaned, c);
+        if (piping == 1){
+            piped(cmds, n_cmd_args, n_cmds);
+        }
+        else{
+            call(cleaned, c);
+        }
         exit(0);
     } else {
         wait(&p);

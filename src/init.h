@@ -28,4 +28,6 @@ char *HOME;
 
 int call(char** args, int n_args);
 void piped(char*** cmds, int* n_cmd_args, int n_cmds);
+void redirection(char** args, int n_args, int piping, char*** cmds, int *n_cmd_args, int n_cmds);
 // void piped();
+// void redirection();
