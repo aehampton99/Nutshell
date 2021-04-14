@@ -1,0 +1,33 @@
+Alec Arreche, Anna Hampton
+COP4600
+Helal
+
+# Nutshell Project
+
+## Description of Roles:
+Alec:
+- Setenv
+- Printenv
+- Unsetenv
+- CD
+- Bye
+- .y file/parser stuff
+- Main function (`main()`)
+- Checking for aliases
+- Checking for cycles in aliases
+
+Anna:
+- Alias function (`alias()`)
+  - adding aliases
+  - listing aliases
+- Unalias function (`unalias()`)
+- Handling external commands (`call_extern()`)
+- Handling pipes (`piped()`)
+- Handling io redirection (`redirection()`)
+
+Together:
+- .l file
+- Call function (`call()`)
+- Initializer function for environment variables and alias' (`init()`)
+- Worked together through debugging and error checking
+  - Important to keep in mind that we did a lot of partner coding to ensure that everything was working correctly and we changed errors as they appeared regardless of whose assigment it was.

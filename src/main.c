@@ -9,6 +9,7 @@
 int yylex();
 extern char* yytext;
 extern int yyparse();
+int BYE = 0;
 
 void init();
 void setenvir(char** args, int n_args);
@@ -25,10 +26,11 @@ int main() {
     init();
     printf("Nutshell\n");
 
-    while(1) {
+    while(BYE == 0) {
         printf(">");
-        if (yyparse() == 1)
-            break;
+        yyparse();
+        // if (yyparse() == 1)
+        //     break;
     }
     printf("...done\n");
 }
@@ -81,8 +83,8 @@ int call(char** args, int n_args) {
         alias(args, n_args);
     } else if (strcmp(cmd, "unalias") == 0) {
         unalias(args, n_args);
-    } else if(strcmp(cmd, "bye") == 0){
-        return 1;
+    } else if (strcmp(cmd, "bye") == 0) {
+        BYE = 1;
     } else if (strcmp(cmd, "hey") == 0){
         redirection();
     }else {
@@ -101,6 +103,7 @@ void call_extern(char** args, int n_args) {
     token = strtok(path_copy, ":");
 
     char* result[INT16_MAX];
+    int ampersand = 0;
 
     // fork
     pid_t p;
@@ -112,6 +115,7 @@ void call_extern(char** args, int n_args) {
         printf("Fork failed.");
     } else if (p == 0){
         int worked = 0;
+
         while (token != NULL) {
             strcpy(result, token);
             strcat(result, "/");
@@ -131,12 +135,14 @@ void call_extern(char** args, int n_args) {
         if (worked == -1){
             printf("Could not find command: %s\n", args[0]);
         }
+
         exit(0);
     }
     else {
-        wait(0);
+        if (ampersand == 0){
+            wait(0);
+        }
     }
-
 }
 
 void piped(char*** cmds, int* n_cmd_args, int n_cmds){
@@ -149,12 +155,12 @@ void piped(char*** cmds, int* n_cmd_args, int n_cmds){
     // int n_cmd_args[4] = {2, 1};
     // int n_cmds = 2;
 
-    int fd1[2], input;
+    int fd[2], input;
     pid_t p;
 
     int i = 0;
     for (int i = 0; i < n_cmds; i++){
-        pipe(fd1);
+        pipe(fd);
 
         p = fork();
 
@@ -165,20 +171,22 @@ void piped(char*** cmds, int* n_cmd_args, int n_cmds){
         }
         else if (p == 0){
             dup2(input, STDIN_FILENO);
+            close(input);
 
             if (cmds[i + 1] != NULL){
-                dup2(fd1[1], STDOUT_FILENO);
+                dup2(fd[1], STDOUT_FILENO);
             }
 
-            close(fd1[0]);
+            close(fd[0]);
             call(cmds[i], n_cmd_args[i]);
             exit(0);
         }
         else{
             wait(&p);
 
-            input = fd1[0];
-            close(fd1[1]);
+            input = fd[0];
+            close(fd[0]);
+            close(fd[1]);
         }
     }
 }
