@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <dirent.h> 
 
 int yylex();
 extern char* yytext;
@@ -21,6 +22,8 @@ void unalias(char** args, int n_args);
 void call_extern(char** args, int n_args);
 void piped(char*** cmd, int* n_cmd_args, int n_cmds);
 void redirection();
+char** list_files();
+int filecmp(char* s, char* t);
 
 int main() {
     init();
@@ -69,7 +72,7 @@ int call(char** args, int n_args) {
     char* cmd = args[0];
 
     int ampersand = 1;
-    int status;
+    char** filenames = list_files;
 
     if (strcmp(cmd, "setenv") == 0) {
         setenvir(args, n_args);
@@ -86,13 +89,71 @@ int call(char** args, int n_args) {
     } else if (strcmp(cmd, "bye") == 0) {
         BYE = 1;
     } else if (strcmp(cmd, "hey") == 0){
-        redirection();
+        list_files();
     }else {
         call_extern(args, n_args); 
     }
 
     return 0;
 }
+
+int filecmp(char* s, char* t){
+    return strcmp(s,t);
+}
+
+//char** list_files(char* pattern, int patternType){
+char** list_files(){
+    const char* pattern = "nut";
+    int patternType = 0;
+    char* filenames[MAX_FILES];
+    DIR* dir;
+    struct dirent *fl;
+    char cwd[300];
+    getcwd(cwd, sizeof(cwd));
+    printf("Executing in %s: \n", cwd);
+
+    if ((dir = opendir(cwd)) != NULL) {
+        int flnum = 0;
+        while ((fl = readdir(dir)) != NULL) {
+            char* fname = fl->d_name;
+            printf("Current file: %s\n", fname);
+
+            if (patternType == 0){
+                if(strstr(fname, pattern) != NULL){
+                    printf("Matched file: %s\n", fname);
+                    filenames[flnum++] = fname;
+                }
+            }
+            if (patternType == 1){
+                for(int i = 0; i < strlen(pattern); i++){
+                    const char* c = &pattern[i];
+                    if(strstr(fname, c) != NULL){
+                        printf("Matched file: %s\n", fname);
+                        filenames[flnum++] = fname;
+                        break;
+                    }
+                }
+            }
+        }
+        filenames[flnum] = NULL;
+
+        closedir (dir);
+
+        if (flnum > 1){
+            qsort(filenames, flnum, sizeof(filenames[0]), filecmp);
+        }
+
+        for (int i = 0; i < flnum; i++){
+            printf("File %d in matching files: %s\n", i, filenames[i]);
+        }
+
+        return filenames;
+    } else {
+        printf("Could not open directory.");
+        return EXIT_FAILURE;
+    }
+}
+
 
 void call_extern(char** args, int n_args) {
     // for each in path 
