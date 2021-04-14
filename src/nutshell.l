@@ -9,7 +9,8 @@
 "\n"                                                            {return RET;}
 "~"                                                             {return TILDE;}
 "|"|" | "                                                       {return PIPE;}
-"<"|" < "|">"|" > "|">>"|" >> "|"2>"|" 2> "|"2>&1"|" 2>&1 "     {yylval.val = strdup(yytext);return REDIRECT;}
+"<"|" < "|">"|" > "|">>"|" >> "|"2>"|" 2> "                     {yylval.val = strdup(yytext);return REDIRECT;}
+"2>&1"|" 2>&1 "|" 2>&1"                                        {return ERRREDIRECT;}   
 \$\{(.*?)\}                                                     {yylval.val = strdup(yytext); return ENV;}
 \"(.*?)\"                                                       {yylval.val = strdup(yytext); return QUOTE;}
 "<"|">"|"\|"|"\\"|"&"                                           {return META;}

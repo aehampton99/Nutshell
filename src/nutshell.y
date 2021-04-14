@@ -12,6 +12,10 @@ int N_PIPES = 0;
 char *args[MAX_ARGS]; // args array 
 int N_ARGS = 0;
 
+int err_redirect = 0;
+int N_io = 0;
+int is_piped = 0;
+
 int yylex();
 int yyparse();
 
@@ -45,6 +49,7 @@ void yyerror(char* e) {
 %token WORD
 %token PIPE
 %token REDIRECT
+%token ERRREDIRECT
 
 %type<val> WORD QUOTE input args param tilde_replace remove_quote ENV env_var REDIRECT
 
@@ -68,7 +73,14 @@ input:
     | input io_redirection RET {
         // printf("FOUND IO REDIRECT\n");
         // printargs();
-        io_redirection_no_pipes();
+        if(!is_piped) {
+            io_redirection_no_pipes();
+        } else {
+            io_redirection_pipes();
+        }
+        N_io = 0;
+        is_piped = 0;
+        err_redirect = 0;
         N_ARGS = 0;
         N_PIPES = 0;
         memset(pipes, 0, sizeof(pipes));
@@ -83,9 +95,12 @@ pipe:
     ;
 
 io_redirection:
-    args REDIRECT WORD {addArg($2); addArg($3);}
-    | pipe REDIRECT WORD
-    | io_redirection REDIRECT WORD
+    args REDIRECT WORD {addArg($2); addArg($3); N_io++;}
+    | pipe REDIRECT WORD {addArg($2); addArg($3); N_io++; is_piped++;}
+    | io_redirection REDIRECT WORD {addArg($2); addArg($3); N_io++;}
+    | args ERRREDIRECT {err_redirect = 1;}
+    | pipe ERRREDIRECT {err_redirect = 1;}
+    | io_redirection ERRREDIRECT {err_redirect = 1;}
     ;
 
 args:
@@ -192,11 +207,74 @@ void setup_pipe_input() {
 }
 
 void io_redirection_no_pipes() {
+    if (err_redirect) {
+        addArg("2>&1");
+    }
     addArg(NULL);
     int piping = 0;
     redirection(args+1, N_ARGS-2, 0, NULL, 0, 0);
-    //redirection();
 }
+
+void io_redirection_pipes() {
+    int idx = 0;
+    int cur_pipe = 0;
+
+    // first index is always ""
+    for(int i = 1; i < (N_ARGS-2*N_io)-err_redirect; i++) {
+        if (strcmp(args[i], "") == 0) {
+            pipes[cur_pipe][idx] = NULL;
+            n_per_pipe[cur_pipe] = idx;
+            cur_pipe++;
+            N_PIPES++;
+            idx = 0;
+        } else {
+            pipes[cur_pipe][idx++] = args[i];
+        }
+    }
+
+    // info for the last pipe
+    pipes[cur_pipe][idx] =  NULL;
+    n_per_pipe[cur_pipe] = idx;
+    N_PIPES++;
+
+    char **cmds[N_PIPES+1];
+    for (int i = 0; i < N_PIPES; i++) {
+        cmds[i] = pipes[i];
+    }
+    cmds[N_PIPES] = NULL;
+
+    printf("PRINTING ARGS PER PIPE\n");
+    for (int i = 0; i < N_PIPES; i++) {
+        printf("Pipe %d\n", i);
+        for (int j = 0; j <= n_per_pipe[i]; j++) {
+            printf("%s\n", cmds[i][j]);
+        }
+        printf("\n");
+    }
+
+    // io redirect
+    char* io_args[2*N_io+1+err_redirect];
+
+    idx = 0;
+    for(int i = N_ARGS-2*N_io; i < N_ARGS; i++) {
+        io_args[idx++] = args[i];
+    }
+    if(err_redirect) {
+        io_args[idx++] = "2>&1";
+    }
+    io_args[idx] = NULL;
+
+    printf("PRINTING ARGS ARRAY\n");
+    for(int i = 0; i < 2*N_io+1+err_redirect; i++) {
+        printf("%s\n", io_args[i]);
+    }
+
+    printf("\nN_ARGS: %d\n", 2*N_io+err_redirect);
+    printf("N_CMDS: %d\n", N_PIPES);
+    
+    redirection(io_args, 2*N_io+err_redirect, 1, cmds, n_per_pipe, N_PIPES);
+}
+
 
 void print_pipe_args() {
     printf("PRINTING ARGS PER PIPE\n");

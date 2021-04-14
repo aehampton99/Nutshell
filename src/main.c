@@ -216,7 +216,7 @@ void redirection(char** args, int n_args, int piping, char*** cmds, int* n_cmd_a
     } else if (p == 0){
         for (int i = 0; i < n_args; i++){
             int j;
-            if (!strcmp(args[i], "<")){
+            if (!strcmp(args[i], "<") || !strcmp(args[i], " < ")){
                 ++i;
                 input = open(args[i], O_RDONLY);
 
@@ -224,7 +224,7 @@ void redirection(char** args, int n_args, int piping, char*** cmds, int* n_cmd_a
                 close(input);
                 continue;
             }
-            if (!strcmp(args[i], ">")){
+            if (!strcmp(args[i], ">") || !strcmp(args[i], " > ")){
                 ++i;
                 output = creat(args[i], 0644);
 
@@ -232,7 +232,7 @@ void redirection(char** args, int n_args, int piping, char*** cmds, int* n_cmd_a
                 close(output);
                 continue;
             }
-            if (!strcmp(args[i], ">>")){
+            if (!strcmp(args[i], ">>") || !strcmp(args[i], " >> ")){
                 ++i;
                 append = open(args[i], O_CREAT | O_RDWR | O_APPEND, 0644);
 
@@ -240,7 +240,7 @@ void redirection(char** args, int n_args, int piping, char*** cmds, int* n_cmd_a
                 close(append);
                 continue;
             }
-            if (!strcmp(args[i], "2>")){
+            if (!strcmp(args[i], "2>") || !strcmp(args[i], " 2> ")){
                 ++i;
                 output = creat(args[i], 0644);
 
@@ -248,7 +248,7 @@ void redirection(char** args, int n_args, int piping, char*** cmds, int* n_cmd_a
                 close(output);
                 continue;
             }
-            if (!strcmp(args[i], "2>&1")){
+            if (!strcmp(args[i], "2>&1") || !strcmp(args[i], " 2>&1 ")){
                 ++i;
                 dup2(STDOUT_FILENO, STDERR_FILENO);
                 close(stdout);
