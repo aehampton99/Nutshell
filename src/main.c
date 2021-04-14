@@ -18,7 +18,6 @@ void cd(char** args, int n_args);
 void alias(char** args, int n_args);
 void unalias(char** args, int n_args);
 void call_extern(char** args, int n_args);
-void piped();
 void redirection();
 
 int main() {
@@ -102,67 +101,55 @@ void call_extern(char** args, int n_args) {
     token = strtok(path_copy, ":");
 
     char* result[INT16_MAX];
-    int worked = -1;
+    int ampersand = 0;
 
-    while (token != NULL) {
-        // try to execute
-        //printf("executing %s in %s\n", args[0], token);
+    // fork
+    pid_t p;
 
-        strcpy(result, token);
-        strcat(result, "/");
-        strcat(result, args[0]);
+    p = fork();
 
-        //printf("executing %s\n", result);
+    // check fork worked
+    if (p < 0){
+        printf("Fork failed.");
+    } else if (p == 0){
+        int worked = 0;
+        while (token != NULL) {
+            strcpy(result, token);
+            strcat(result, "/");
+            strcat(result, args[0]);
 
-        // fork
-        pid_t p;
-
-        p = fork();
-
-        // check fork worked
-        if (p < 0){
-            printf("Fork failed.");
-        } else if (p == 0){
-            //printf("Args 1: %s\n", args[0]);
-            //printf("Args 2: %s\n", args[1]);
-            //printf("Number of args: %d\n", n_args);
-
-            char cwd[150];
-            getcwd(cwd, sizeof(cwd));
-            //printf("%s\n", cwd);
-
-            if(execv(result, args) == -1 && !strtok(NULL, ":")) {
-                printf("Could not find command: %s\n", args[0]);
+            if(execv(result, args) != -1){
+                worked = 1;
+                break;
             }
-
-            exit(0);
+            else {
+                worked = -1;
+            }
+            // go next 
+            token = strtok(NULL, ":");
         }
-        else {
-           wait(0);
+
+        if (worked == -1){
+            printf("Could not find command: %s\n", args[0]);
         }
 
-        // go next 
-        token = strtok(NULL, ":");
+        exit(0);
     }
-
+    else {
+        if (ampersand == 0){
+            wait(0);
+        }
+    }
 }
 
-void piped(){
-    char *ls[] = {"cat","test.txt", NULL};
-    char *grep[] = {"sort", NULL};
-    //char *wc[] = {"grep", "-v", "'200[456]'", NULL};
-    //char *more[] = {"more", NULL};
-    char **cmd[] = {ls, grep, NULL};
+void piped(char*** cmds, int* n_cmd_args, int n_cmds) {
 
-    int n_cmd_args[4] = {2, 1};
-    int n_cmds = 2;
-
-    int fd1[2], fd2[2];
+    int fd[2], input;
     pid_t p;
 
     int i = 0;
     for (int i = 0; i < n_cmds; i++){
-        pipe(fd1);
+        pipe(fd);
 
         p = fork();
 
@@ -172,21 +159,22 @@ void piped(){
             return;
         }
         else if (p == 0){
-            dup2(fd2[0], STDIN_FILENO);
+            dup2(input, STDIN_FILENO);
+            close(input);
 
-            if (cmd[i + 1] != NULL){
-                dup2(fd1[1], STDOUT_FILENO);
+            if (cmds[i + 1] != NULL){
+                dup2(fd[1], STDOUT_FILENO);
             }
 
-            close(fd1[0]);
-            call(cmd[i], n_cmd_args[i]);
+            close(fd[0]);
+            call(cmds[i], n_cmd_args[i]);
             exit(0);
         }
         else{
             wait(&p);
 
-            close(fd1[1]);
-            fd2[0] = fd1[0];
+            input = fd[0];
+            close(fd[1]);
         }
     }
 }

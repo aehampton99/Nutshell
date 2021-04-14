@@ -27,3 +27,5 @@ char *PATH;
 char *HOME;
 
 int call(char** args, int n_args);
+void piped(char*** cmds, int* n_cmd_args, int n_cmds);
+// void piped();

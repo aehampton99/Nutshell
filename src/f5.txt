@@ -1,2 +1,0 @@
-HOME = home
-PATH = /usr/bin:/bin

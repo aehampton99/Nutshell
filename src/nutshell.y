@@ -4,6 +4,10 @@
 #include <string.h>
 
 #define MAX_ARGS 100
+#define MAX_PIPES 100
+char *pipes[MAX_PIPES][MAX_ARGS]; // pipes
+int n_per_pipe[MAX_PIPES];
+int N_PIPES = 0;
 
 char *args[MAX_ARGS]; // args array 
 int N_ARGS = 0;
@@ -11,6 +15,9 @@ int N_ARGS = 0;
 int yylex();
 int yyparse();
 
+void printargs();
+void print_pipe_args();
+void setup_pipe_input();
 void addArg(char* a);
 char* concat(const char *s1, const char *s2);
 char* getEnv(char* s);
@@ -26,7 +33,6 @@ void yyerror(char* e) {
     int id; 
 }
 
-%start input
 
 %token RET
 %token WS
@@ -35,6 +41,7 @@ void yyerror(char* e) {
 %token ENV
 %token META
 %token WORD
+%token PIPE
 
 %type<val> WORD QUOTE input args param tilde_replace remove_quote ENV env_var
 
@@ -42,16 +49,28 @@ void yyerror(char* e) {
 
 input:
     %empty
-    | input args RET{
-        //printf("Calling\n");
-        int ret = call(args, N_ARGS);
+    | input args RET {
+        int ret = call(args+1, N_ARGS-1);
         N_ARGS = 0;
+        memset(args, 0, sizeof(args));
+        YYACCEPT;}
+    | input pipe RET {
+        setup_pipe_input();
+        N_ARGS = 0;
+        N_PIPES = 0;
+        memset(pipes, 0, sizeof(pipes));
+        memset(n_per_pipe, 0, sizeof(n_per_pipe));
         memset(args, 0, sizeof(args));
         YYACCEPT;}
     ;
 
+pipe:
+    args PIPE args 
+    | pipe PIPE args
+    ;
+
 args:
-    param {addArg($1);}
+    param {addArg(""); addArg($1);}
     | args WS param {addArg($3);}
     ;
 
@@ -68,7 +87,7 @@ tilde_replace:
     ;
 
 remove_quote: 
-    QUOTE {$$[strlen($1)-1] = '\0'; $$ = $1 + 1; printf("%s\n", $$);}
+    QUOTE {$$[strlen($1)-1] = '\0'; $$ = $1 + 1;}
     ;
 
 env_var:
@@ -112,4 +131,54 @@ char* concat(const char *s1, const char *s2)
     strcat(result, s2);
 
     return result;
+}
+
+void printargs() {
+    printf("PRINTING ARGS IN SEQUENCE\n");
+    for (int i = 0; i < N_ARGS; i++) {
+        printf("%s\n", args[i]);
+    }
+}
+
+void setup_pipe_input() {
+    int idx = 0;
+    int cur_pipe = 0;
+
+    // first index is always ""
+    for(int i = 1; i < N_ARGS; i++) {
+        if (strcmp(args[i], "") == 0) {
+            pipes[cur_pipe][idx] = NULL;
+            n_per_pipe[cur_pipe] = idx;
+            cur_pipe++;
+            N_PIPES++;
+            idx = 0;
+        } else {
+            pipes[cur_pipe][idx++] = args[i];
+        }
+    }
+
+    // info for the last pipe
+    pipes[cur_pipe][idx] =  NULL;
+    n_per_pipe[cur_pipe] = idx;
+    N_PIPES++;
+
+    char **cmds[N_PIPES+1];
+    for (int i = 0; i < N_PIPES; i++) {
+        cmds[i] = pipes[i];
+    }
+    cmds[N_PIPES] = NULL;
+
+    // call piped 
+    piped(cmds, n_per_pipe, N_PIPES);
+}
+
+void print_pipe_args() {
+    printf("PRINTING ARGS PER PIPE\n");
+    for (int i = 0; i < N_PIPES; i++) {
+        printf("Pipe %d\n", i);
+        for (int j = 0; j <= n_per_pipe[i]; j++) {
+            printf("%s\n", pipes[i][j]);
+        }
+        printf("\n");
+    }
 }
