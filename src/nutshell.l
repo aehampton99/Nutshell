@@ -11,8 +11,7 @@
 "~"                                                             {return TILDE;}
 "|"|" | "                                                       {return PIPE;}
 "&"                                                             {return AMP;}
-[?\*][^~ "\t<>\|\\&\n]*                                         {yylval.val = strdup(yytext); return WILDFRONT;}
-[^~ "\t<>\|\\&\n]*[?\*]                                         {yylval.val = strdup(yytext); return WILDBACK;}
+[^~ "\t<>\|\\&\n]*[?*][^~ "\t<>\|\\&\n]*                        {yylval.val = strdup(yytext); return WILD;}
 "<"|" < "|">"|" > "|">>"|" >> "|"2>"|" 2> "                     {yylval.val = strdup(yytext);return REDIRECT;}
 "2>&1"|" 2>&1 "|" 2>&1"                                         {return ERRREDIRECT;}   
 \$\{(.*?)\}                                                     {yylval.val = strdup(yytext); return ENV;}

@@ -28,7 +28,6 @@ int main() {
         printf(">");
         yyparse();
     }
-    printf("...done\n");
 }
 
 void init() {

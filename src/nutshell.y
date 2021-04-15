@@ -31,7 +31,7 @@ void io_redirection_no_pipes();
 void io_redirection_pipes();
 void handle_wild(char* w);
 void alias_expansion();
-char** list_files(char* pattern, int patternType);
+char** list_files(char* pattern);
 char* env_var_quote(char* q);
 int filecmp(const void* s, const void* t);
 void addArg(char* a);
@@ -63,10 +63,9 @@ void yyerror(char* e) {
 %token ERRREDIRECT
 %token NEW
 %token AMP
-%token WILDFRONT
-%token WILDBACK
+%token WILD
 
-%type<val> WORD QUOTE input args param tilde_replace remove_quote ENV env_var REDIRECT WILDFRONT WILDBACK
+%type<val> WORD QUOTE input args param tilde_replace remove_quote ENV env_var REDIRECT WILD
 
 %%
 
@@ -140,22 +139,8 @@ args:
     | args whitespace param {addArg($3);}
     | env_var {addArg("|"); addEnvVarArg($1);}
     | args whitespace env_var {addEnvVarArg($3);}
-    | WILDFRONT {
-        int matcher = $1[0] != '*';
-        handle_wild($1+1, matcher);}
-    | args whitespace WILDFRONT {
-        int matcher = $3[0] != '*';
-        handle_wild($3+1, matcher);}
-    | WILDBACK {
-        char* w = $1;
-        int matcher = w[strlen($1)-1] != '*';
-        w[strlen(w)-1] = '\0';
-        handle_wild(w, matcher);}
-    | args whitespace WILDBACK {
-        char* w = $3;
-        int matcher = w[strlen($3)-1] != '*';
-        w[strlen(w)-1] = '\0';
-        handle_wild(w, matcher);}
+    | WILD {addArg("|"); handle_wild($1); printargs();}
+    | args whitespace WILD {handle_wild($3);}
     ;
 
 param:
@@ -374,8 +359,10 @@ char* env_var_quote(char* q) {
         }
 
         result = concat(result, cur);
-        result = concat(result, " ");
         ptr = strtok(NULL, delim);
+        if (ptr) {
+            result = concat(result, " ");
+        }
     }
     return result;
 }
@@ -393,7 +380,7 @@ char** list_files(char* pattern){
     struct dirent *fl;
     char cwd[300];
     getcwd(cwd, sizeof(cwd));
-    //printf("Executing in %s: \n", cwd);
+    // printf("Executing in %s: \n", cwd);
 
     if ((dir = opendir(cwd)) != NULL) {
         int flnum = 0;
@@ -410,9 +397,23 @@ char** list_files(char* pattern){
 
         if (flnum > 1){
             qsort(filenames, flnum, sizeof(filenames[0]), filecmp);
+        } 
+
+        if (flnum == 0) {
+            char* result = "";
+            for(int i = 0; i < strlen(pattern); i++) {
+                if (pattern[i] != '?' && pattern[i] != '*') {
+                    char* letter[2];
+                    letter[0] = pattern[i];
+                    letter[1] = '\0';
+                    result = concat(result, letter);
+                }
+            }
+            filenames[0] = result;
+            filenames[1] = NULL;
         }
 
-        // for (int i = 0; i < flnum; i++){
+        // for (int i = 0; i < flnum-1; i++){
         //     printf("File %d in matching files: %s\n", i, filenames[i]);
         // }
 
@@ -437,7 +438,7 @@ char* str_slice(char* str, int start, int end){
 }
 
 void handle_wild(char* w) {
-    char* matches = list_files(w);
+    char** matches = list_files(w);
 
     int i = 0;
     while(matches[i]) {
