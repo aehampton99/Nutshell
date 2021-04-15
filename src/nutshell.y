@@ -316,7 +316,7 @@ void io_redirection_pipes() {
         printf("%s\n", io_args[i]);
     }
 
-    printf("\nN_ARGS: %d\n", 2*N_io+err_redirect);
+    printf("\n N_ARGS: %d \n", 2*N_io+err_redirect);
     printf("N_CMDS: %d\n", N_PIPES);
     
     redirection(io_args, 2*N_io+err_redirect, 1, cmds, n_per_pipe, N_PIPES);
@@ -393,8 +393,28 @@ char** list_files(char* pattern, int patternType) {
     }
 }
 
-void handle_wild(char* w, int matcher) {
-    char **matches = list_files(w, matcher);
+void handle_wild(char* w) {
+    int wild_loc;
+    int type;
+
+    for (int i = 0; i < strlen(w); i++){
+        if (!strcmp(w[i], '*')){
+            wild_loc = i;
+            type = 0;
+            break;
+        }
+        if(!strcmp(w[i], '?')){
+            wild_loc = i;
+            type = 1;
+            break;
+        }
+    }
+
+    if (wild_loc == 0){
+        char** matches = list_files(w+1, type);
+    } else if(wild_loc == strlen(w)-1){
+        w[strlen(w)-1] = \0;
+    }
 
     int i = 0;
     while(matches[i]) {
