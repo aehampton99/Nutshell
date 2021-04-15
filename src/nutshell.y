@@ -218,13 +218,6 @@ char* concat(const char *s1, const char *s2)
     return result;
 }
 
-void printargs() {
-    printf("PRINTING ARGS IN SEQUENCE\n");
-    for (int i = 0; i < N_ARGS; i++) {
-        printf("%s\n", args[i]);
-    }
-}
-
 void setup_pipe_input() {
     int idx = 0;
     int cur_pipe = 0;
@@ -294,15 +287,6 @@ void io_redirection_pipes() {
     }
     cmds[N_PIPES] = NULL;
 
-    printf("PRINTING ARGS PER PIPE\n");
-    for (int i = 0; i < N_PIPES; i++) {
-        printf("Pipe %d\n", i);
-        for (int j = 0; j <= n_per_pipe[i]; j++) {
-            printf("%s\n", cmds[i][j]);
-        }
-        printf("\n");
-    }
-
     // io redirect
     char* io_args[2*N_io+1+err_redirect];
 
@@ -315,27 +299,7 @@ void io_redirection_pipes() {
     }
     io_args[idx] = NULL;
 
-    printf("PRINTING ARGS ARRAY\n");
-    for(int i = 0; i < 2*N_io+1+err_redirect; i++) {
-        printf("%s\n", io_args[i]);
-    }
-
-    printf("\n N_ARGS: %d \n", 2*N_io+err_redirect);
-    printf("N_CMDS: %d\n", N_PIPES);
-    
     redirection(io_args, 2*N_io+err_redirect, 1, cmds, n_per_pipe, N_PIPES);
-}
-
-
-void print_pipe_args() {
-    printf("PRINTING ARGS PER PIPE\n");
-    for (int i = 0; i < N_PIPES; i++) {
-        printf("Pipe %d\n", i);
-        for (int j = 0; j <= n_per_pipe[i]; j++) {
-            printf("%s\n", pipes[i][j]);
-        }
-        printf("\n");
-    }
 }
 
 char* env_var_quote(char* q) {
@@ -380,7 +344,6 @@ char** list_files(char* pattern){
     struct dirent *fl;
     char cwd[300];
     getcwd(cwd, sizeof(cwd));
-    // printf("Executing in %s: \n", cwd);
 
     if ((dir = opendir(cwd)) != NULL) {
         int flnum = 0;
@@ -412,10 +375,6 @@ char** list_files(char* pattern){
             filenames[0] = result;
             filenames[1] = NULL;
         }
-
-        // for (int i = 0; i < flnum-1; i++){
-        //     printf("File %d in matching files: %s\n", i, filenames[i]);
-        // }
 
         return filenames;
     } else {

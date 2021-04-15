@@ -242,7 +242,6 @@ void redirection(char** args, int n_args, int piping, char*** cmds, int* n_cmd_a
 
 void setenvir(char** args, int n_args) {
 
-
     if (n_args != 3) {
         printf("ERROR: EXPECTED 2 ARGUMENTS, GOT %d\n", n_args-1);
         return;

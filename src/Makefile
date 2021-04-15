@@ -1,5 +1,5 @@
 nutshell: nutshell.tab.c lex.yy.c main.c
-	gcc main.c nutshell.tab.c lex.yy.c -lfl -o nutshell
+	gcc main.c nutshell.tab.c lex.yy.c -ll -o nutshell
 
 nutshell.tab.c:
 	bison -d nutshell.y
