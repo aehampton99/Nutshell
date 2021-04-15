@@ -31,6 +31,7 @@ void io_redirection_pipes();
 void handle_wild(char* w, int matcher);
 void alias_expansion();
 char** list_files(char* pattern, int patternType);
+char* env_var_quote(char* q);
 int filecmp(const void* s, const void* t);
 void addArg(char* a);
 void addEnvVarArg(char* a);
@@ -88,8 +89,6 @@ input:
         memset(args, 0, sizeof(args));
         YYACCEPT;}
     | input io_redirection whitespace background whitespace RET {
-        // printf("FOUND IO REDIRECT\n");
-        // printargs();
         alias_expansion();
         if(!is_piped) {
             io_redirection_no_pipes();
@@ -170,7 +169,9 @@ tilde_replace:
     ;
 
 remove_quote: 
-    QUOTE {$$[strlen($1)-1] = '\0'; $$ = $1 + 1;}
+    QUOTE {$$[strlen($1)-1] = '\0'; $$ = $1 + 1;
+            $$ = env_var_quote($$);
+            }
     ;
 
 env_var:
@@ -349,6 +350,33 @@ void print_pipe_args() {
         }
         printf("\n");
     }
+}
+
+char* env_var_quote(char* q) {
+    char *str = strdup(q);
+    char* delim = " ";
+    char *ptr = strtok(str, delim);
+    char* result = "";
+
+    while(ptr != NULL) {
+        char* cur;
+        if(strlen(ptr) > 3) {
+
+            if(ptr[0] == '$' && ptr[1] == '{' && ptr[strlen(ptr)-1] == '}') {
+                cur = getEnv(ptr);
+            } else {
+                cur = ptr;
+            }
+
+        } else {
+            cur = ptr;
+        }
+
+        result = concat(result, cur);
+        result = concat(result, " ");
+        ptr = strtok(NULL, delim);
+    }
+    return result;
 }
 
 int filecmp(const void* s, const void* t) {
