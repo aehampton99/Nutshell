@@ -90,26 +90,26 @@ input:
         YYACCEPT;}
     ;
 
-whitespace:
+pipe:
+    args whitespace PIPE whitespace args whitespace
+    | pipe whitespace PIPE whitespace args whitespace
+    ;
+
+io_redirection:
+    args whitespace REDIRECT whitespace WORD {addArg($3); addArg($5); N_io++;}
+    | pipe whitespace REDIRECT whitespace WORD {addArg($3); addArg($5); N_io++; is_piped++;}
+    | io_redirection whitespace REDIRECT whitespace WORD {addArg($3); addArg($5); N_io++;}
+    | args whitespace ERRREDIRECT {err_redirect = 1;}
+    | pipe whitespace ERRREDIRECT {err_redirect = 1;}
+    | io_redirection whitespace ERRREDIRECT {err_redirect = 1;}
+    ;
+
+    whitespace:
     %empty
     | WS
     | NEW
     | whitespace WS
     | whitespace NEW
-    ;
-
-pipe:
-    args PIPE args 
-    | pipe PIPE args 
-    ;
-
-io_redirection:
-    args REDIRECT WORD {addArg($2); addArg($3); N_io++;}
-    | pipe REDIRECT WORD {addArg($2); addArg($3); N_io++; is_piped++;}
-    | io_redirection REDIRECT WORD {addArg($2); addArg($3); N_io++;}
-    | args ERRREDIRECT {err_redirect = 1;}
-    | pipe ERRREDIRECT {err_redirect = 1;}
-    | io_redirection ERRREDIRECT {err_redirect = 1;}
     ;
 
 args:
