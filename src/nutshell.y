@@ -410,6 +410,19 @@ char** list_files(char* pattern, int patternType) {
     }
 }
 
+char* str_slice(char* str, int start, int end){
+    int length = end - start;
+    char* out[length];
+
+    for (int i = start; i <= end; i++) {
+        out[i] = str[i];
+    }
+
+    out[length+1] = \0;
+
+    return out;
+}
+
 void handle_wild(char* w) {
     int wild_loc;
     int type;
@@ -431,6 +444,23 @@ void handle_wild(char* w) {
         char** matches = list_files(w+1, type);
     } else if(wild_loc == strlen(w)-1){
         w[strlen(w)-1] = \0;
+        char** matches = list_files(w, type);
+    } else {
+        char* str1 = str_slice(w, 0, wild_loc);
+        char* str2 = str_slice(w, wild_loc+1, strlen(w-1));
+
+        char** matches1 = list_files(str1, type);
+        char** matches2 = list_files(str2, type);
+        char** matches[MAX_FILES];
+
+        int count = 0;
+        for(int i = 0; i < strlen(matches1); i++){
+            for(int j = 0; j < strlen(matches2); j++){
+                if (strcmp(matches1[i], matches2[j])){
+                    matches[count++] = matches1[i];
+                }
+            }
+        }
     }
 
     int i = 0;
