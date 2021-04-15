@@ -183,7 +183,6 @@ void redirection(char** args, int n_args, int piping, char*** cmds, int* n_cmd_a
     p = fork();
 
     if (p < 0){
-        printf("Houston, we have a problem.\n");
         exit(1);
         return;
     } else if (p == 0){
@@ -243,8 +242,7 @@ void redirection(char** args, int n_args, int piping, char*** cmds, int* n_cmd_a
 }
 
 void setenvir(char** args, int n_args) {
-    //
-    printf("SET ENV %s = %s\n", args[1], args[2]);
+
 
     if (n_args != 3) {
         printf("ERROR: EXPECTED 2 ARGUMENTS, GOT %d\n", n_args-1);
@@ -266,7 +264,6 @@ void setenvir(char** args, int n_args) {
             var_table.keys[i] = args[1];
             var_table.vals[i] = args[2];
             var_table.occupied[i] = 1;
-            printf("entered at index %d\n", i);
             return;
         }
     }
@@ -366,7 +363,6 @@ void alias(char** args, int n_args) {
                 alias_table.keys[i] = args[1];
                 alias_table.vals[i] = args[2];
                 alias_table.occupied[i] = 1;
-                //printf("entered at index %d\n", i);
                 return;
             }
         }
