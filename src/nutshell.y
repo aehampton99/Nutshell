@@ -24,8 +24,6 @@ int is_piped = 0;
 int yylex();
 int yyparse();
 
-void printargs();
-void print_pipe_args();
 void setup_pipe_input();
 void io_redirection_no_pipes();
 void io_redirection_pipes();
@@ -139,7 +137,7 @@ args:
     | args whitespace param {addArg($3);}
     | env_var {addArg("|"); addEnvVarArg($1);}
     | args whitespace env_var {addEnvVarArg($3);}
-    | WILD {addArg("|"); handle_wild($1); printargs();}
+    | WILD {addArg("|"); handle_wild($1);}
     | args whitespace WILD {handle_wild($3);}
     ;
 
