@@ -357,38 +357,23 @@ int filecmp(const void* s, const void* t) {
     return strcmp(ss,tt);
 }
 
-char** list_files(char* pattern, int patternType) {
-
-    // const char* pattern = "nut";
-    // int patternType = 0;
+char** list_files(char* pattern){
+    const char* pattern = "t*";
     char* filenames[MAX_FILES];
+
     DIR* dir;
     struct dirent *fl;
     char cwd[300];
     getcwd(cwd, sizeof(cwd));
-    //printf("Executing in %s: \n", cwd);
+    printf("Executing in %s: \n", cwd);
 
     if ((dir = opendir(cwd)) != NULL) {
         int flnum = 0;
         while ((fl = readdir(dir)) != NULL) {
             char* fname = fl->d_name;
-            //printf("Current file: %s\n", fname);
 
-            if (patternType == 0){
-                if(strstr(fname, pattern) != NULL){
-                    //printf("Matched file: %s\n", fname);
-                    filenames[flnum++] = fname;
-                }
-            }
-            if (patternType == 1){
-                for(int i = 0; i < strlen(pattern); i++){
-                    const char* c = &pattern[i];
-                    if(strstr(fname, c) != NULL){
-                        //printf("Matched file: %s\n", fname);
-                        filenames[flnum++] = fname;
-                        break;
-                    }
-                }
+            if(fnmatch(pattern, fname, 0 ) == 0 ){
+                filenames[flnum++] = fname;
             }
         }
         filenames[flnum] = NULL;
@@ -400,12 +385,12 @@ char** list_files(char* pattern, int patternType) {
         }
 
         for (int i = 0; i < flnum; i++){
-            //printf("File %d in matching files: %s\n", i, filenames[i]);
+            printf("File %d in matching files: %s\n", i, filenames[i]);
         }
 
         return filenames;
     } else {
-        //printf("Could not open directory.");
+        printf("Could not open directory.");
         return EXIT_FAILURE;
     }
 }
@@ -441,16 +426,16 @@ void handle_wild(char* w) {
     }
 
     if (wild_loc == 0){
-        char** matches = list_files(w+1, type);
+        char** matches = list_files(w);
     } else if(wild_loc == strlen(w)-1){
-        w[strlen(w)-1] = \0;
-        char** matches = list_files(w, type);
+        w[strlen(w)-1] = 0;
+        char** matches = list_files(w);
     } else {
         char* str1 = str_slice(w, 0, wild_loc);
         char* str2 = str_slice(w, wild_loc+1, strlen(w-1));
 
-        char** matches1 = list_files(str1, type);
-        char** matches2 = list_files(str2, type);
+        char** matches1 = list_files(str1);
+        char** matches2 = list_files(str2);
         char** matches[MAX_FILES];
 
         int count = 0;
