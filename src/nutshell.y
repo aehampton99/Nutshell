@@ -51,6 +51,7 @@ void yyerror(char* e) {
 %token REDIRECT
 %token ERRREDIRECT
 %token NEW
+%token AMP
 
 %type<val> WORD QUOTE input args param tilde_replace remove_quote ENV env_var REDIRECT
 
@@ -58,20 +59,22 @@ void yyerror(char* e) {
 
 input:
     %empty
-    | input args whitespace RET {
+    | input args whitespace background whitespace RET {
         int ret = call(args+1, N_ARGS-1);
         N_ARGS = 0;
+        AMPERSAND = 0;
         memset(args, 0, sizeof(args));
         YYACCEPT;}
-    | input pipe whitespace RET {
+    | input pipe whitespace background whitespace RET {
         setup_pipe_input();
         N_ARGS = 0;
         N_PIPES = 0;
+        AMPERSAND = 0;
         memset(pipes, 0, sizeof(pipes));
         memset(n_per_pipe, 0, sizeof(n_per_pipe));
         memset(args, 0, sizeof(args));
         YYACCEPT;}
-    | input io_redirection whitespace RET {
+    | input io_redirection whitespace background whitespace RET {
         // printf("FOUND IO REDIRECT\n");
         // printargs();
         if(!is_piped) {
@@ -84,10 +87,16 @@ input:
         err_redirect = 0;
         N_ARGS = 0;
         N_PIPES = 0;
+        AMPERSAND = 0;
         memset(pipes, 0, sizeof(pipes));
         memset(n_per_pipe, 0, sizeof(n_per_pipe));
         memset(args, 0, sizeof(args));
         YYACCEPT;}
+    ;
+
+background:
+    %empty
+    | AMP {AMPERSAND = 1;}
     ;
 
 pipe:

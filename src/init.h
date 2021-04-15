@@ -18,6 +18,7 @@ struct aliases {
 
 int cur_envvar;
 int cur_alias;
+int AMPERSAND;
 
 struct env_vars var_table;
 struct aliases alias_table; 

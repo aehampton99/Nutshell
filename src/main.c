@@ -53,6 +53,9 @@ void init() {
     var_table.vals[1] = ".:/usr/bin:/bin"; // needs legit default value 
     PATH = var_table.vals[1];
 
+    // set ampersand
+    AMPERSAND = 0;
+
     // set BYE
     BYE = 0;
 }
@@ -98,7 +101,6 @@ void call_extern(char** args, int n_args) {
     token = strtok(path_copy, ":");
 
     char* result[INT16_MAX];
-    int ampersand = 0;
 
     // fork
     pid_t p;
@@ -110,6 +112,7 @@ void call_extern(char** args, int n_args) {
         printf("Fork failed.");
     } else if (p == 0){
         int worked = 0;
+
         while (token != NULL) {
             strcpy(result, token);
             strcat(result, "/");
@@ -133,7 +136,7 @@ void call_extern(char** args, int n_args) {
         exit(0);
     }
     else {
-        if (ampersand == 0){
+        if (AMPERSAND == 0){
             wait(0);
         }
     }
@@ -177,30 +180,6 @@ void piped(char*** cmds, int* n_cmd_args, int n_cmds) {
 }
 
 void redirection(char** args, int n_args, int piping, char*** cmds, int* n_cmd_args, int n_cmds){
- //void redirection(){
-    // when pipes redirection arguments, in this case "args", would begin with the first redirection metacharacter
-    // when no pipes, it includes the command and everything else
-    // the three possible patterns
-    // command with io redirection -> redirection()
-    // piped commands with io redirection -> redirection()
-    // piped commands -> piped()
-    // everything needs to be NULL terminated
-    // char *args[] = {">", "f5.txt", NULL};
-    // int n_args = 2;
-
-    // char *ls[] = {"cat","test.txt", NULL};
-    // char *grep[] = {"sort", NULL};
-    // char **cmd[] = {ls, grep, NULL};
-    // int n_cmd_args[4] = {2, 1};
-    // int n_cmds = 2;
-
-    // int piping = 1;
-    // char *args[] = {"ls", ">", "test2.txt", NULL};
-    // int piping = 0;
-    // int n_args = 3;
-    // int ***cmds;
-    // int *n_cmd_args;
-    // int n_cmds;
 
     int input = 0, output = 0, append = 0;
     char* cleaned[n_args];
