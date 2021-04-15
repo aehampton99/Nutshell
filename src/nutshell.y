@@ -2,6 +2,10 @@
 #include "init.h"
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <dirent.h> 
 
 #define MAX_ARGS 100
 #define MAX_PIPES 100
@@ -24,6 +28,9 @@ void print_pipe_args();
 void setup_pipe_input();
 void io_redirection_no_pipes();
 void io_redirection_pipes();
+void handle_wild(char* w, int matcher);
+char** list_files(char* pattern, int patternType);
+int filecmp(const void* s, const void* t);
 void addArg(char* a);
 char* concat(const char *s1, const char *s2);
 char* getEnv(char* s);
@@ -52,8 +59,10 @@ void yyerror(char* e) {
 %token ERRREDIRECT
 %token NEW
 %token AMP
+%token WILDFRONT
+%token WILDBACK
 
-%type<val> WORD QUOTE input args param tilde_replace remove_quote ENV env_var REDIRECT
+%type<val> WORD QUOTE input args param tilde_replace remove_quote ENV env_var REDIRECT WILDFRONT WILDBACK
 
 %%
 
@@ -124,6 +133,22 @@ io_redirection:
 args:
     param {addArg(""); addArg($1);}
     | args whitespace param {addArg($3);}
+    | WILDFRONT {
+        int matcher = $1[0] != '*';
+        handle_wild($1+1, matcher);}
+    | args whitespace WILDFRONT {
+        int matcher = $3[0] != '*';
+        handle_wild($3+1, matcher);}
+    | WILDBACK {
+        char* w = $1;
+        int matcher = w[strlen($1)-1] != '*';
+        w[strlen(w)-1] = '\0';
+        handle_wild(w, matcher);}
+    | args whitespace WILDBACK {
+        char* w = $3;
+        int matcher = w[strlen($3)-1] != '*';
+        w[strlen(w)-1] = '\0';
+        handle_wild(w, matcher);}
     ;
 
 param:
@@ -304,3 +329,73 @@ void print_pipe_args() {
         printf("\n");
     }
 }
+
+int filecmp(const void* s, const void* t) {
+    const char* ss = *(const char**)s;
+    const char* tt = *(const char**)t;
+    return strcmp(ss,tt);
+}
+
+char** list_files(char* pattern, int patternType) {
+
+    // const char* pattern = "nut";
+    // int patternType = 0;
+    char* filenames[MAX_FILES];
+    DIR* dir;
+    struct dirent *fl;
+    char cwd[300];
+    getcwd(cwd, sizeof(cwd));
+    //printf("Executing in %s: \n", cwd);
+
+    if ((dir = opendir(cwd)) != NULL) {
+        int flnum = 0;
+        while ((fl = readdir(dir)) != NULL) {
+            char* fname = fl->d_name;
+            //printf("Current file: %s\n", fname);
+
+            if (patternType == 0){
+                if(strstr(fname, pattern) != NULL){
+                    //printf("Matched file: %s\n", fname);
+                    filenames[flnum++] = fname;
+                }
+            }
+            if (patternType == 1){
+                for(int i = 0; i < strlen(pattern); i++){
+                    const char* c = &pattern[i];
+                    if(strstr(fname, c) != NULL){
+                        //printf("Matched file: %s\n", fname);
+                        filenames[flnum++] = fname;
+                        break;
+                    }
+                }
+            }
+        }
+        filenames[flnum] = NULL;
+
+        closedir (dir);
+
+        if (flnum > 1){
+            qsort(filenames, flnum, sizeof(filenames[0]), filecmp);
+        }
+
+        for (int i = 0; i < flnum; i++){
+            //printf("File %d in matching files: %s\n", i, filenames[i]);
+        }
+
+        return filenames;
+    } else {
+        //printf("Could not open directory.");
+        return EXIT_FAILURE;
+    }
+}
+
+void handle_wild(char* w, int matcher) {
+    char **matches = list_files(w, matcher);
+
+    int i = 0;
+    while(matches[i]) {
+        if(strcmp(matches[i], ".") != 0 && strcmp(matches[i], "..") !=0)
+            addArg(matches[i]);
+        i++;
+    }
+ }

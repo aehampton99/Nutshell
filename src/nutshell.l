@@ -11,11 +11,13 @@
 "~"                                                             {return TILDE;}
 "|"|" | "                                                       {return PIPE;}
 "&"                                                             {return AMP;}
+[?\*][^~ "\t<>\|\\&\n]*                                            {yylval.val = strdup(yytext); return WILDFRONT;}
+[^~ "\t<>\|\\&\n]*[?\*]                                            {yylval.val = strdup(yytext); return WILDBACK;}
 "<"|" < "|">"|" > "|">>"|" >> "|"2>"|" 2> "                     {yylval.val = strdup(yytext);return REDIRECT;}
 "2>&1"|" 2>&1 "|" 2>&1"                                         {return ERRREDIRECT;}   
 \$\{(.*?)\}                                                     {yylval.val = strdup(yytext); return ENV;}
 \"(.*?)\"                                                       {yylval.val = strdup(yytext); return QUOTE;}
 "<"|">"|"\|"|"\\"|"&"                                           {return META;}
-[^~ "\t<>\|\\&\nX][^ "\t<>\|\\&\nX]*                            {yylval.val = strdup(yytext); return WORD;}
+[^~ "\t<>\|\\&\n]*                            {yylval.val = strdup(yytext); return WORD;}
 %%
 

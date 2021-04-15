@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <dirent.h> 
 
 int yylex();
 extern char* yytext;

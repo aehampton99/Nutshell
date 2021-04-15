@@ -3,6 +3,7 @@
 #define MAX_ENV 100
 #define MAX_ALIAS 100
 #define MAX_PATH_CHAR 300
+#define MAX_FILES 100
 
 struct env_vars {
     int occupied[MAX_ENV];
@@ -30,5 +31,6 @@ char *HOME;
 int call(char** args, int n_args);
 void piped(char*** cmds, int* n_cmd_args, int n_cmds);
 void redirection(char** args, int n_args, int piping, char*** cmds, int *n_cmd_args, int n_cmds);
+
 // void piped();
 // void redirection();
