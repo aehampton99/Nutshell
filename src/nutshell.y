@@ -403,7 +403,7 @@ char* str_slice(char* str, int start, int end){
         out[i] = str[i];
     }
 
-    out[length+1] = \0;
+    out[length+1] = 0;
 
     return out;
 }
@@ -413,14 +413,8 @@ void handle_wild(char* w) {
     int type;
 
     for (int i = 0; i < strlen(w); i++){
-        if (!strcmp(w[i], '*')){
+        if (!strcmp(w[i], '*') || !strcmp(w[i], '?')){
             wild_loc = i;
-            type = 0;
-            break;
-        }
-        if(!strcmp(w[i], '?')){
-            wild_loc = i;
-            type = 1;
             break;
         }
     }
@@ -428,11 +422,10 @@ void handle_wild(char* w) {
     if (wild_loc == 0){
         char** matches = list_files(w);
     } else if(wild_loc == strlen(w)-1){
-        w[strlen(w)-1] = 0;
         char** matches = list_files(w);
     } else {
         char* str1 = str_slice(w, 0, wild_loc);
-        char* str2 = str_slice(w, wild_loc+1, strlen(w-1));
+        char* str2 = str_slice(w, wild_loc, strlen(w-1));
 
         char** matches1 = list_files(str1);
         char** matches2 = list_files(str2);
