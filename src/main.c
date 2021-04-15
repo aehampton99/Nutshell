@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <dirent.h> 
+#include <fnmatch.h>
 
 int yylex();
 extern char* yytext;
@@ -101,11 +102,24 @@ int filecmp(char* s, char* t){
     return strcmp(s,t);
 }
 
+char* str_slice(char* str, int start, int end){
+    int length = end - start;
+    char* out[length];
+
+    for (int i = start; i <= end; i++) {
+        out[i] = str[i];
+    }
+
+    out[length+1] = 0;
+
+    return out;
+}
+
 //char** list_files(char* pattern, int patternType){
 char** list_files(){
-    const char* pattern = "nut";
-    int patternType = 0;
+    const char* pattern = "t*";
     char* filenames[MAX_FILES];
+
     DIR* dir;
     struct dirent *fl;
     char cwd[300];
@@ -116,23 +130,9 @@ char** list_files(){
         int flnum = 0;
         while ((fl = readdir(dir)) != NULL) {
             char* fname = fl->d_name;
-            printf("Current file: %s\n", fname);
 
-            if (patternType == 0){
-                if(strstr(fname, pattern) != NULL){
-                    printf("Matched file: %s\n", fname);
-                    filenames[flnum++] = fname;
-                }
-            }
-            if (patternType == 1){
-                for(int i = 0; i < strlen(pattern); i++){
-                    const char* c = &pattern[i];
-                    if(strstr(fname, c) != NULL){
-                        printf("Matched file: %s\n", fname);
-                        filenames[flnum++] = fname;
-                        break;
-                    }
-                }
+            if(fnmatch(pattern, fname, 0 ) == 0 ){
+                filenames[flnum++] = fname;
             }
         }
         filenames[flnum] = NULL;
