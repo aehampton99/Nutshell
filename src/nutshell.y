@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <dirent.h> 
+#include <fnmatch.h>
 
 #define MAX_ARGS 100
 #define MAX_PIPES 100
@@ -28,7 +29,7 @@ void print_pipe_args();
 void setup_pipe_input();
 void io_redirection_no_pipes();
 void io_redirection_pipes();
-void handle_wild(char* w, int matcher);
+void handle_wild(char* w);
 void alias_expansion();
 char** list_files(char* pattern, int patternType);
 char* env_var_quote(char* q);
@@ -385,11 +386,9 @@ int filecmp(const void* s, const void* t) {
     return strcmp(ss,tt);
 }
 
-char** list_files(char* pattern, int patternType) {
-
-    // const char* pattern = "nut";
-    // int patternType = 0;
+char** list_files(char* pattern){
     char* filenames[MAX_FILES];
+
     DIR* dir;
     struct dirent *fl;
     char cwd[300];
@@ -400,23 +399,9 @@ char** list_files(char* pattern, int patternType) {
         int flnum = 0;
         while ((fl = readdir(dir)) != NULL) {
             char* fname = fl->d_name;
-            //printf("Current file: %s\n", fname);
 
-            if (patternType == 0){
-                if(strstr(fname, pattern) != NULL){
-                    //printf("Matched file: %s\n", fname);
-                    filenames[flnum++] = fname;
-                }
-            }
-            if (patternType == 1){
-                for(int i = 0; i < strlen(pattern); i++){
-                    const char* c = &pattern[i];
-                    if(strstr(fname, c) != NULL){
-                        //printf("Matched file: %s\n", fname);
-                        filenames[flnum++] = fname;
-                        break;
-                    }
-                }
+            if (fnmatch(pattern, fname, 0) == 0){
+                filenames[flnum++] = fname;
             }
         }
         filenames[flnum] = NULL;
@@ -427,39 +412,32 @@ char** list_files(char* pattern, int patternType) {
             qsort(filenames, flnum, sizeof(filenames[0]), filecmp);
         }
 
-        for (int i = 0; i < flnum; i++){
-            //printf("File %d in matching files: %s\n", i, filenames[i]);
-        }
+        // for (int i = 0; i < flnum; i++){
+        //     printf("File %d in matching files: %s\n", i, filenames[i]);
+        // }
 
         return filenames;
     } else {
-        //printf("Could not open directory.");
+        printf("Could not open directory.");
         return EXIT_FAILURE;
     }
 }
 
+char* str_slice(char* str, int start, int end){
+    int length = end - start;
+    char* out[length];
+
+    for (int i = start; i <= end; i++) {
+        out[i] = str[i];
+    }
+
+    out[length+1] = 0;
+
+    return out;
+}
+
 void handle_wild(char* w) {
-    int wild_loc;
-    int type;
-
-    for (int i = 0; i < strlen(w); i++){
-        if (!strcmp(w[i], '*')){
-            wild_loc = i;
-            type = 0;
-            break;
-        }
-        if(!strcmp(w[i], '?')){
-            wild_loc = i;
-            type = 1;
-            break;
-        }
-    }
-
-    if (wild_loc == 0){
-        char** matches = list_files(w+1, type);
-    } else if(wild_loc == strlen(w)-1){
-        w[strlen(w)-1] = \0;
-    }
+    char* matches = list_files(w);
 
     int i = 0;
     while(matches[i]) {

@@ -176,7 +176,7 @@ void piped(char*** cmds, int* n_cmd_args, int n_cmds) {
 void redirection(char** args, int n_args, int piping, char*** cmds, int* n_cmd_args, int n_cmds){
 
     int input = 0, output = 0, append = 0;
-    char* cleaned[n_args];
+    char* commands[n_args];
     int c = 0;
 
     pid_t p;
@@ -226,14 +226,14 @@ void redirection(char** args, int n_args, int piping, char*** cmds, int* n_cmd_a
                 close(stdout);
                 continue;
             }
-            cleaned[c++] = args[i];
+            commands[c++] = args[i];
         }
-        cleaned[c] = NULL;
+        commands[c] = NULL;
         if (piping == 1){
             piped(cmds, n_cmd_args, n_cmds);
         }
         else{
-            call(cleaned, c);
+            call(commands, c);
         }
         exit(0);
     } else {
