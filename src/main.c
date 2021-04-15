@@ -43,7 +43,9 @@ void init() {
     // set HOME
     var_table.occupied[0] = 1;
     var_table.keys[0] = "HOME";
-    var_table.vals[0] = "home"; // needs legit default value 
+    char cwd[150];
+    getcwd(cwd, sizeof(cwd));
+    var_table.vals[0] = cwd; // needs legit default value 
     HOME = var_table.vals[0]; // make sure this is shallow copy 
 
     // set PATH
