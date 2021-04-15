@@ -27,8 +27,6 @@ int main() {
     while(BYE == 0) {
         printf(">");
         yyparse();
-        // if (yyparse() == 1)
-        //     break;
     }
     printf("...done\n");
 }
@@ -63,13 +61,6 @@ void init() {
 
 // main entry point for a command 
 int call(char** args, int n_args) {
-    //printf("Printing Args in Main.C\n");
-    //for (int i = 0; i < n_args; i++) {
-    //    printf("%s\n", args[i]);
-    //}
-
-    // TODO: check for aliases first 
-    // check for built in command 
     char* cmd = args[0];
 
     if (strcmp(cmd, "setenv") == 0) {
@@ -284,6 +275,9 @@ void setenvir(char** args, int n_args) {
 void unsetenvir(char** args, int n_args) {
     if (n_args > 2) {
         printf("WARNING: EXPECTED 1 ARGUMENT, GOT %d\n", n_args-1);
+    } else if (strcmp(args[1], "HOME") == 0 || strcmp(args[1], "PATH") == 0) {
+        printf("ERROR: CANNOT REMOVE MANDATORY VARIABLE\n");
+        return;
     }
 
     for (int i = 0; i < MAX_ENV; i++) {
@@ -300,7 +294,7 @@ void printenv(char** args, int n_args) {
 
     for (int i = 0; i < MAX_ENV; i++) {
         if(var_table.occupied[i]) {
-            printf("%s = %s\n", var_table.keys[i], var_table.vals[i]);
+            printf("%s=%s\n", var_table.keys[i], var_table.vals[i]);
         }
     }
 
@@ -320,13 +314,10 @@ void cd(char** args, int n_args) {
     if (!chdir(args[1])) {
         char cwd[150];
         getcwd(cwd, sizeof(cwd));
-        printf("%s\n", cwd);
     } else {
         printf("ERROR: NOT A DIRECTORY: %s\n", args[1]);
     }
-
-    // TODO: wildcard matching 
-}
+} 
 
 void alias(char** args, int n_args) { 
     if(n_args == 2){
@@ -383,7 +374,7 @@ void alias(char** args, int n_args) {
     } else{
         for (int i = 0; i < MAX_ALIAS; i++){
             if (alias_table.occupied[i] == 1){
-                printf("%s = %s\n", alias_table.keys[i], alias_table.vals[i]);
+                printf("%s=%s\n", alias_table.keys[i], alias_table.vals[i]);
             }
         } 
     }
@@ -400,10 +391,9 @@ void unalias(char** args, int n_args) {
     }
 
     for (int i = 0; i < MAX_ALIAS; i++){
-        if (alias_table.keys[i] == args[2]){
-            alias_table.keys[i] = " ";
-            alias_table.vals[i] = " ";
+        if (strcmp(alias_table.keys[i], args[1]) == 0){
             alias_table.occupied[i] = 0;
+            break;
         }
     } 
 }
