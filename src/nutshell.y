@@ -29,6 +29,7 @@ void setup_pipe_input();
 void io_redirection_no_pipes();
 void io_redirection_pipes();
 void handle_wild(char* w, int matcher);
+void alias_expansion();
 char** list_files(char* pattern, int patternType);
 int filecmp(const void* s, const void* t);
 void addArg(char* a);
@@ -69,12 +70,14 @@ void yyerror(char* e) {
 input:
     %empty
     | input args whitespace background whitespace RET {
+        alias_expansion();
         int ret = call(args+1, N_ARGS-1);
         N_ARGS = 0;
         AMPERSAND = 0;
         memset(args, 0, sizeof(args));
         YYACCEPT;}
     | input pipe whitespace background whitespace RET {
+        alias_expansion();
         setup_pipe_input();
         N_ARGS = 0;
         N_PIPES = 0;
@@ -86,6 +89,7 @@ input:
     | input io_redirection whitespace background whitespace RET {
         // printf("FOUND IO REDIRECT\n");
         // printargs();
+        alias_expansion();
         if(!is_piped) {
             io_redirection_no_pipes();
         } else {
@@ -399,3 +403,23 @@ void handle_wild(char* w, int matcher) {
         i++;
     }
  }
+
+void alias_expansion() {
+    char* w = args[1];
+    char* next = NULL;
+    int found = 1;
+    
+    while(found == 1) {
+        found = 0;
+        // check if w is in keys
+        for (int i = 0; i < MAX_ALIAS; i++) {
+            if (alias_table.occupied[i] == 1 && strcmp(w, alias_table.keys[i]) == 0) {
+                w = alias_table.vals[i];
+                found = 1;
+                break;
+            }
+        }
+    } 
+    args[1] = w;
+
+}
