@@ -358,21 +358,20 @@ int filecmp(const void* s, const void* t) {
 }
 
 char** list_files(char* pattern){
-    const char* pattern = "t*";
     char* filenames[MAX_FILES];
 
     DIR* dir;
     struct dirent *fl;
     char cwd[300];
     getcwd(cwd, sizeof(cwd));
-    printf("Executing in %s: \n", cwd);
+    //printf("Executing in %s: \n", cwd);
 
     if ((dir = opendir(cwd)) != NULL) {
         int flnum = 0;
         while ((fl = readdir(dir)) != NULL) {
             char* fname = fl->d_name;
 
-            if(fnmatch(pattern, fname, 0 ) == 0 ){
+            if (fnmatch(pattern, fname, 0) == 0){
                 filenames[flnum++] = fname;
             }
         }
@@ -384,9 +383,9 @@ char** list_files(char* pattern){
             qsort(filenames, flnum, sizeof(filenames[0]), filecmp);
         }
 
-        for (int i = 0; i < flnum; i++){
-            printf("File %d in matching files: %s\n", i, filenames[i]);
-        }
+        // for (int i = 0; i < flnum; i++){
+        //     printf("File %d in matching files: %s\n", i, filenames[i]);
+        // }
 
         return filenames;
     } else {
@@ -409,37 +408,7 @@ char* str_slice(char* str, int start, int end){
 }
 
 void handle_wild(char* w) {
-    int wild_loc;
-    int type;
-
-    for (int i = 0; i < strlen(w); i++){
-        if (!strcmp(w[i], '*') || !strcmp(w[i], '?')){
-            wild_loc = i;
-            break;
-        }
-    }
-
-    if (wild_loc == 0){
-        char** matches = list_files(w);
-    } else if(wild_loc == strlen(w)-1){
-        char** matches = list_files(w);
-    } else {
-        char* str1 = str_slice(w, 0, wild_loc);
-        char* str2 = str_slice(w, wild_loc, strlen(w-1));
-
-        char** matches1 = list_files(str1);
-        char** matches2 = list_files(str2);
-        char** matches[MAX_FILES];
-
-        int count = 0;
-        for(int i = 0; i < strlen(matches1); i++){
-            for(int j = 0; j < strlen(matches2); j++){
-                if (strcmp(matches1[i], matches2[j])){
-                    matches[count++] = matches1[i];
-                }
-            }
-        }
-    }
+    char* matches = list_files(w);
 
     int i = 0;
     while(matches[i]) {
