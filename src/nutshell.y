@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <dirent.h> 
+#include <fnmatch.h>
 
 #define MAX_ARGS 100
 #define MAX_PIPES 100
@@ -28,9 +29,9 @@ void print_pipe_args();
 void setup_pipe_input();
 void io_redirection_no_pipes();
 void io_redirection_pipes();
-void handle_wild(char* w, int matcher);
+void handle_wild(char* w);
 void alias_expansion();
-char** list_files(char* pattern, int patternType);
+char** list_files(char* pattern);
 int filecmp(const void* s, const void* t);
 void addArg(char* a);
 void addEnvVarArg(char* a);
