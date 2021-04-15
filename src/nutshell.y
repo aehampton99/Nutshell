@@ -33,6 +33,7 @@ void alias_expansion();
 char** list_files(char* pattern, int patternType);
 int filecmp(const void* s, const void* t);
 void addArg(char* a);
+void addEnvVarArg(char* a);
 char* concat(const char *s1, const char *s2);
 char* getEnv(char* s);
 void yyerror(char* e) {
@@ -135,8 +136,10 @@ io_redirection:
     ;
 
 args:
-    param {addArg(""); addArg($1);}
+    param {addArg("|"); addArg($1);}
     | args whitespace param {addArg($3);}
+    | env_var {addArg("|"); addEnvVarArg($1);}
+    | args whitespace env_var {addEnvVarArg($3);}
     | WILDFRONT {
         int matcher = $1[0] != '*';
         handle_wild($1+1, matcher);}
@@ -159,7 +162,6 @@ param:
     WORD
     | remove_quote
     | tilde_replace
-    | env_var
     ;
 
 tilde_replace:
@@ -188,16 +190,31 @@ void addArg(char* a) {
     N_ARGS++;
 }
 
+void addEnvVarArg(char* a) {
+    char *str = strdup(a);
+    char* delim = " ";
+    char *ptr = strtok(str, delim);
+
+    while(ptr != NULL) {
+        args[N_ARGS++] = ptr;
+        ptr = strtok(NULL, delim);
+    }
+
+}
+
 char* getEnv(char* s) {
     s[strlen(s)-1] = '\0';
     char* varName = s + 2;
+    char* w = "";
 
     for (int i = 0; i < MAX_ENV; i++) {
         if (var_table.occupied[i] == 1 && strcmp(varName, var_table.keys[i]) == 0) {
-            return var_table.vals[i];
+            w = var_table.vals[i];
+            break;
         }
-    }
-    return "\0";
+    } 
+
+    return w;
 }
 
 char* concat(const char *s1, const char *s2)
@@ -225,9 +242,9 @@ void setup_pipe_input() {
     int idx = 0;
     int cur_pipe = 0;
 
-    // first index is always ""
+    // first index is always "|"
     for(int i = 1; i < N_ARGS; i++) {
-        if (strcmp(args[i], "") == 0) {
+        if (strcmp(args[i], "|") == 0) {
             pipes[cur_pipe][idx] = NULL;
             n_per_pipe[cur_pipe] = idx;
             cur_pipe++;
@@ -266,9 +283,9 @@ void io_redirection_pipes() {
     int idx = 0;
     int cur_pipe = 0;
 
-    // first index is always ""
+    // first index is always "|"
     for(int i = 1; i < (N_ARGS-2*N_io)-err_redirect; i++) {
-        if (strcmp(args[i], "") == 0) {
+        if (strcmp(args[i], "|") == 0) {
             pipes[cur_pipe][idx] = NULL;
             n_per_pipe[cur_pipe] = idx;
             cur_pipe++;
@@ -426,7 +443,6 @@ void handle_wild(char* w) {
 
 void alias_expansion() {
     char* w = args[1];
-    char* next = NULL;
     int found = 1;
     
     while(found == 1) {
@@ -439,7 +455,32 @@ void alias_expansion() {
                 break;
             }
         }
-    } 
+    }
+
     args[1] = w;
 
+    // split by spaces
+    char *new_args[MAX_ARGS];
+    new_args[0] = "|";
+    char *str = strdup(w);
+    char* delim = " ";
+    char *ptr = strtok(str, delim);
+    int idx = 1;
+
+    while(ptr != NULL) {
+        new_args[idx++] = ptr;
+        ptr = strtok(NULL, delim);
+    }
+
+    int alias_words = idx-1;
+    int new_n_args = N_ARGS+alias_words-1;
+    for(int i = idx; i < new_n_args; i++) {
+        new_args[i] = args[i - alias_words+1];
+    }
+
+    memset(args, 0, sizeof(args));
+    N_ARGS = 0;
+    for(int i = 0; i < new_n_args; i++) {
+        addArg(new_args[i]);
+    }
 }
