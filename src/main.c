@@ -110,14 +110,14 @@ char* str_slice(char* str, int start, int end){
         out[i] = str[i];
     }
 
-    out[length+1] = 0;
+    out[++length] = 0;
 
     return out;
 }
 
 //char** list_files(char* pattern, int patternType){
 char** list_files(){
-    const char* pattern = "t*";
+    const char* pattern = "t*.txt";
     char* filenames[MAX_FILES];
 
     DIR* dir;
